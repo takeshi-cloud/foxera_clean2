@@ -4,7 +4,6 @@ import { getMarketData } from "../lib/api/getMarketData";
 import { useEffect, useState } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
 
-// ここが全部修正ポイント
 import { useBoards } from "../lib/useBoards";
 import { splitBoards } from "../lib/boardUtils";
 import {
@@ -12,44 +11,38 @@ import {
   createShort,
   toggleDirection,
   removeBoard,
-} from "@/lib/boardActions";
+} from "../lib/boardActions";
 
-import { insertBoard, updateBoard } from "@/lib/boardService";
+import { insertBoard, updateBoard } from "../lib/boardService";
 
 import { LeftPanel } from "./components/LeftPanel";
 import { CenterPanel } from "./components/CenterPanel";
 import { RightPanel } from "./components/RightPanel";
 
-
-// =========================================
-// 🧠 メインページ（全体管理）
-// =========================================
-
 export default function Home() {
-  // =========================================
-  // 📦 DBデータ取得
-  // =========================================
-  const { boards, load, shots, loadShots, hasScreenshot } = useBoards();
+  // 安全に取得
+  const boardsHook = useBoards() || {};
+  const boards = boardsHook.boards ?? [];
+  const load = boardsHook.load ?? (() => {});
+  const shots = boardsHook.shots ?? [];
+  const loadShots = boardsHook.loadShots ?? (() => {});
+  const hasScreenshot = boardsHook.hasScreenshot ?? (() => false);
 
-  // =========================================
-  // activePairをHomeに追加
-  // =========================================
   const [activePair, setActivePair] = useState<string | null>(null);
   const [market, setMarket] = useState<any>(null);
 
   const loadMarket = async (pair: string) => {
-    const data = await getMarketData(pair);
-    setMarket(data);
+    try {
+      const data = await getMarketData(pair);
+      setMarket(data);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  // =========================================
-  // 🔀 派生データ（WAITだけ）
-  // =========================================
-  const { wait } = splitBoards(boards);
+  // 安全に分解
+  const { wait = [] } = splitBoards(boards) || {};
 
-  // =========================================
-  // 🎛 UI状態
-  // =========================================
   const [newPair, setNewPair] = useState("");
   const [cursor, setCursor] = useState(0);
 
@@ -57,7 +50,8 @@ export default function Home() {
     return basePrice + cursor;
   };
 
-  const mergedBoards = wait.map((pair: string) => {
+  // 安全にmap
+  const mergedBoards = (wait ?? []).map((pair: string) => {
     return {
       id: pair,
       pair,
@@ -65,26 +59,22 @@ export default function Home() {
     };
   });
 
-  // ================================
-  // 🧊 初回ロード & ダミー
-  // ================================
   useEffect(() => {
     if (activePair) {
       loadMarket(activePair);
     }
   }, [activePair]);
 
-  // =========================================
-  // 🧲 DnD処理
-  // =========================================
   const onDragEnd = async (result: any) => {
     const { destination, draggableId } = result;
     if (!destination) return;
 
-    const item = boards.find((b: any) => b.id.toString() === draggableId);
+    const item = (boards ?? []).find(
+      (b: any) => b?.id?.toString() === draggableId
+    );
 
     if (!item) {
-      if (destination.droppableId.startsWith("long-")) {
+      if (destination.droppableId?.startsWith("long-")) {
         const pair = draggableId;
         await insertBoard(pair.toUpperCase());
         await load();
@@ -95,8 +85,8 @@ export default function Home() {
     const fromType = item.timeframe_type;
 
     let toType = "";
-    if (destination.droppableId.startsWith("long-")) toType = "long";
-    else if (destination.droppableId.startsWith("short-")) toType = "short";
+    if (destination.droppableId?.startsWith("long-")) toType = "long";
+    else if (destination.droppableId?.startsWith("short-")) toType = "short";
     else if (destination.droppableId === "wait") toType = "wait";
 
     if (
@@ -114,9 +104,9 @@ export default function Home() {
       return;
     }
 
-    if (destination.droppableId.startsWith("long-")) {
+    if (destination.droppableId?.startsWith("long-")) {
       const phase = destination.droppableId.replace("long-", "");
-      const current = boards.find((b) => b.id === draggableId);
+      const current = (boards ?? []).find((b) => b?.id === draggableId);
       if (!current) return;
 
       await updateBoard(
@@ -131,9 +121,9 @@ export default function Home() {
       return;
     }
 
-    if (destination.droppableId.startsWith("short-")) {
+    if (destination.droppableId?.startsWith("short-")) {
       const phase = destination.droppableId.replace("short-", "");
-      const current = boards.find((b) => b.id === draggableId);
+      const current = (boards ?? []).find((b) => b?.id === draggableId);
       if (!current) return;
 
       await updateBoard(
@@ -149,18 +139,12 @@ export default function Home() {
     }
   };
 
-  // =========================================
-  // ➕ 通貨ペア追加
-  // =========================================
   const addPair = async () => {
     if (!newPair) return;
     setNewPair("");
     load();
   };
 
-  // =========================================
-  // 🖥 UIレイアウト（3分割）
-  // =========================================
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
