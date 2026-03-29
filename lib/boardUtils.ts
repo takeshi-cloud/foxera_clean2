@@ -59,7 +59,7 @@ export const getPhaseBoards = (boards: any[], phase: string, filter: string) => 
 // =========================================
 // WAIT は DB に存在しないので対象外。
 // board に存在するペアだけを対象にする。
-export const buildStatus = (boards: any[]) => {
+export const buildStatus = (boards: any[] = []) => {
   const pairs = [...new Set(boards.map(b => b.pair))];
 
   return pairs.map(pair => {
