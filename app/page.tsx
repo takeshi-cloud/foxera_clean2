@@ -21,7 +21,7 @@ import { RightPanel } from "./components/RightPanel";
 
 export default function Home() {
   // 安全に取得
-  const boardsHook = useBoards() || {};
+const boardsHook: any = useBoards() || {};
   const boards = boardsHook.boards ?? [];
   const load = boardsHook.load ?? (() => {});
   const shots = boardsHook.shots ?? [];
