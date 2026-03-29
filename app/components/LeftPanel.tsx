@@ -199,7 +199,7 @@ export const LeftPanel = ({
               <div className="menuBtn">📊 ギャラリー</div>
             </Link>
 
-            <Link href="/login_bak">
+            <Link href="/login">
               <div className="menuBtn">ログイン</div>
             </Link>
 
