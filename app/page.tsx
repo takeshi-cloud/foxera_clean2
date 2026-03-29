@@ -1,11 +1,12 @@
 "use client";
 
-import { getMarketData } from "@/lib/api/getMarketData";
+import { getMarketData } from "../lib/api/getMarketData";
 import { useEffect, useState } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
 
-import { useBoards } from "@/lib/useBoards";
-import { splitBoards } from "@/lib/boardUtils";
+// ここが全部修正ポイント
+import { useBoards } from "../lib/useBoards";
+import { splitBoards } from "../lib/boardUtils";
 import {
   moveToWait,
   createShort,

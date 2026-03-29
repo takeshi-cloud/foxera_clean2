@@ -1,6 +1,6 @@
 
 import { calcPivot, getNearestPivot } from "@/lib/calc/pivot";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/services/supabase";
 
 export async function getMarketData(pair: string) {
   const { data, error } = await supabase

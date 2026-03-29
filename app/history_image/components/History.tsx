@@ -3,7 +3,7 @@
 
 
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../../lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
 
 
@@ -85,10 +85,10 @@ export default function History() {
   };
 
   const updateField = (id: string, key: string, value: string | boolean) => {
-  setForms((prev) => ({
-    ...prev,
-    [id]: { ...prev[id], [key]: value },
-  }));
+  setForms((prev: any) => ({
+  ...prev,
+  [id]: { ...prev[id], [key]: value },
+}));
 };
   const handleUpdate = async (s: Screenshot) => {
     const f = forms[s.id];
