@@ -9,20 +9,13 @@ export async function GET(req: Request) {
   const pair =
     searchParams.get("pair") || "USD/JPY";
 
-  const dailyDate =
-    searchParams.get("dailyDate") || undefined;
+  // ❌ これは今の関数では使えないので一旦無視
+  // const dailyDate = ...
+  // const weekStart = ...
+  // const weekEnd = ...
 
-  const weekStart =
-    searchParams.get("weekStart") || undefined;
-
-  const weekEnd =
-    searchParams.get("weekEnd") || undefined;
-
-  const nyBars = await nyBarsBuilder(pair, {
-    dailyDate,
-    weekStart,
-    weekEnd,
-  });
+  // ✅ 正しくはこれだけ
+  const nyBars = await nyBarsBuilder(pair);
 
   const pivotDaily = calcPivot(
     nyBars.prevDaily.high,
@@ -38,9 +31,6 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     pair,
-    intraday: nyBars.intraday,
-    dailyBars: nyBars.dailyBars,
-    weeklyBars: nyBars.weeklyBars,
     prevDaily: nyBars.prevDaily,
     prevWeekly: nyBars.prevWeekly,
     pivotDaily,
