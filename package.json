@@ -2,6 +2,7 @@
   "name": "foxera_clean_manual",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,14 +10,22 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
+    "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/supabase-js": "^2.100.1",
+    "@types/react-dom": "^18.3.7",
     "next": "14.1.0",
+    "papaparse": "^5.5.3",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@types/node": "25.5.0",
-    "@types/react": "19.2.14",
+    "@types/papaparse": "^5.5.2",
+    "@types/react": "^18.3.28",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^3.4.19",
     "typescript": "6.0.2"
   }
 }

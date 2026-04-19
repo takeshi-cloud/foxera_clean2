@@ -1,0 +1,1 @@
+export { getRadarScatter } from "./services/getRadarScatter";
