@@ -130,7 +130,7 @@ export default function UploadUI() {
     <div style={container}>
       {/* ================= 左UI ================= */}
       <div style={left}>
-        <button onClick={() => router.push("/home")} style={homeBtn}>
+        <button onClick={() => router.push("/")} style={homeBtn}>
           ← HOME
         </button>
 

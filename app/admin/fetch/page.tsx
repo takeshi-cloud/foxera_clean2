@@ -175,7 +175,7 @@ export default function FetchPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#08080a", color: "white", padding: 20 }}>
-      <button onClick={() => router.push("/home")} style={{ fontSize: 25 }}>
+      <button onClick={() => router.push("/")} style={{ fontSize: 25 }}>
         🏠 HOME
       </button>
 

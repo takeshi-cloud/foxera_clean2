@@ -2,85 +2,54 @@
 
 import { useEffect, useState } from "react";
 import { RadarScatterChart } from "./RadarScatterChart";
+import { getRadarScatter } from "@/lib/pivot_radar/services/getRadarScatter";
 
 type RadarPoint = {
   pair: string;
   x: number;
   y: number;
   timestamp: string;
-  source_daily_date?: string;
-  source_week_start?: string;
-  source_week_end?: string;
 };
-
 
 export const RadarPanel = () => {
   const [data, setData] = useState<RadarPoint[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [updatedAt, setUpdatedAt] = useState("");
-  const [dailySource, setDailySource] = useState("");
-  const [weeklySource, setWeeklySource] = useState("");
 
   // ========================================
-  // Radar Load（修正版）
+  // Radar Load（DB → get）
   // ========================================
   const loadRadar = async () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/pivot/radar");
-      const json = await res.json();
+      const rows = await getRadarScatter();
 
-      console.log("📡 API raw:", json);
-
-      // 🔥 APIのresults → UI用に変換
-      const rows: RadarPoint[] = (json?.results || [])
-        .map((r: any) => {
-          if (!r?.summary?.radar) return null;
-
-          return {
-            pair: r.symbol,
-            x: r.summary.radar.x,
-            y: r.summary.radar.y,
-            timestamp: r.summary.radar.time,
-            source_daily_date: r.summary?.pivot?.dailyDate,
-            source_week_start: r.summary?.pivot?.weeklyDate,
-          };
-        })
-        .filter(Boolean); // null除外
+      console.log("📡 scatter rows:", rows);
 
       setData(rows);
 
-      // ====================================
-      // 最新データ
-      // ====================================
+      // 最新時刻
       if (rows.length > 0) {
         const latest = rows[0];
 
-        const fullTime = new Date(
-          latest.timestamp
-        ).toLocaleString("ja-JP", {
-          timeZone: "Asia/Tokyo",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        const fullTime = new Date(latest.timestamp).toLocaleString(
+          "ja-JP",
+          {
+            timeZone: "Asia/Tokyo",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          }
+        );
 
         setUpdatedAt(fullTime);
-        setDailySource(latest.source_daily_date || "");
-
-        setWeeklySource(
-          latest.source_week_start
-            ? `${latest.source_week_start}`
-            : ""
-        );
       } else {
         setUpdatedAt("");
-        setDailySource("");
-        setWeeklySource("");
       }
+
     } catch (e) {
       console.error("❌ Radar load failed:", e);
       setData([]);
@@ -90,20 +59,20 @@ export const RadarPanel = () => {
   };
 
   // ========================================
-  // 初回 + イベント連動
+  // 初回 + 更新イベント
   // ========================================
   useEffect(() => {
     loadRadar();
 
     const handler = () => {
-      console.log("📡 radar:updated → reload");
+      console.log("📡 load-radar → reload");
       loadRadar();
     };
 
-    window.addEventListener("radar:updated", handler);
+    window.addEventListener("load-radar", handler);
 
     return () => {
-      window.removeEventListener("radar:updated", handler);
+      window.removeEventListener("load-radar", handler);
     };
   }, []);
 
@@ -128,18 +97,9 @@ export const RadarPanel = () => {
           fontSize: 12,
           color: "#e2e8f0",
           marginBottom: 8,
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
         }}
       >
-        <div>最終更新：{updatedAt || "-"}</div>
-
-        <div>
-          日足Pivot元：{dailySource || "-"}
-          <span style={{ marginLeft: 10 }} />
-          週足Pivot元：{weeklySource || "-"}
-        </div>
+        最終更新：{updatedAt || "-"}
       </div>
 
       {/* Body */}

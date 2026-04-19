@@ -1,17 +1,41 @@
-import { getRadarHistory } from "../infra/getRadarHistory";
-import { getLatestPerPair } from "../selectors/getLatestPerPair";
+import { supabase } from "@/lib/infra/supabase";
 
-export const getRadarScatter = async (market: string) => {
-  const rows = await getRadarHistory(market);
+export const getRadarScatter = async () => {
+  const { data, error } = await supabase
+    .from("pivot_radar_history")
+    .select("*");
 
-  const latestPerPair = getLatestPerPair(rows);
+  if (error) {
+    console.error("❌ getRadarScatter error:", error);
+    return [];
+  }
 
-  const result = latestPerPair.map((r: any) => ({
-    pair: r.symbol, // ← 表示用だけpairにしてOK
+  if (!data || data.length === 0) return [];
+
+  const map = new Map<string, any>();
+
+  for (const r of data) {
+    if (!r.symbol) continue;
+
+    const prev = map.get(r.symbol);
+
+    const t1 = r.timestamp
+      ? new Date(r.timestamp).getTime()
+      : 0;
+
+    const t2 = prev?.timestamp
+      ? new Date(prev.timestamp).getTime()
+      : 0;
+
+    if (!prev || t1 > t2) {
+      map.set(r.symbol, r);
+    }
+  }
+
+  return Array.from(map.values()).map((r) => ({
+    pair: r.symbol,
     x: r.x,
     y: r.y,
     timestamp: r.timestamp,
   }));
-
-  return result;
 };

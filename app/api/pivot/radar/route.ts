@@ -41,87 +41,89 @@ export async function GET(req: Request) {
     );
 
     // =========================================
-    // ② 並列実行
+    // ② 直列実行（ここだけ変更）
     // =========================================
-    const results = await Promise.all(
-      targets.map(async (m) => {
-        const cache = cacheMap.get(m.api);
+    const results: any[] = [];
 
-        let skip = false;
+    for (const m of targets) {
+      const cache = cacheMap.get(m.api);
 
-        if (!force && cache?.price_timestamp) {
-          const diffMin =
-            (Date.now() - new Date(cache.price_timestamp).getTime()) /
-            60000;
+      let skip = false;
 
-          if (diffMin < 5) {
-            skip = true;
-          }
+      if (!force && cache?.price_timestamp) {
+        const diffMin =
+          (Date.now() - new Date(cache.price_timestamp).getTime()) /
+          60000;
+
+        if (diffMin < 5) {
+          skip = true;
         }
+      }
 
-        // =====================================
-        // SKIP（ここが重要）
-        // =====================================
-        if (skip) {
-  log("SKIP CACHE", m.api);
+      // =====================================
+      // SKIP（ここが重要）
+      // =====================================
+      if (skip) {
+        log("SKIP CACHE", m.api);
 
-  const { data: latest } = await supabase
-    .from("pivot_radar_history")
-    .select("*")
-    .eq("symbol", m.api)
-    .order("timestamp", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+        const { data: latest } = await supabase
+          .from("pivot_radar_history")
+          .select("*")
+          .eq("symbol", m.api)
+          .order("timestamp", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-  return {
-    label: m.label,
-    symbol: m.api,
-    key: m.key,
-    step: "cache",
-    summary: latest
-      ? {
-          now: {
-            utc: latest.timestamp,
-            tokyo: latest.timestamp,
-          },
-          price: {
-            value: latest.price,
-            time: latest.price_timestamp,
-          },
-          radar: {
-            x: latest.x,
-            y: latest.y,
-            time: latest.timestamp,
-          },
-        }
-      : null,
-    error: null,
-  };
-}
-
-        // =====================================
-        // 実行
-        // =====================================
-        log("RUN", m.api);
-
-        const result = await runOnePair(m.api);
-
-        log("DONE", {
-          market: m.api,
-          step: result?.step,
-        });
-
-        return {
+        results.push({
           label: m.label,
           symbol: m.api,
           key: m.key,
-          step: result?.step,
-          summary: result?.summary,
-          trace: result?.trace,
-          error: result?.error || null,
-        };
-      })
-    );
+          step: "cache",
+          summary: latest
+            ? {
+                now: {
+                  utc: latest.timestamp,
+                  tokyo: latest.timestamp,
+                },
+                price: {
+                  value: latest.price,
+                  time: latest.price_timestamp,
+                },
+                radar: {
+                  x: latest.x,
+                  y: latest.y,
+                  time: latest.timestamp,
+                },
+              }
+            : null,
+          error: null,
+        });
+
+        continue;
+      }
+
+      // =====================================
+      // 実行
+      // =====================================
+      log("RUN", m.api);
+
+      const result = await runOnePair(m.api);
+
+      log("DONE", {
+        market: m.api,
+        step: result?.step,
+      });
+
+      results.push({
+        label: m.label,
+        symbol: m.api,
+        key: m.key,
+        step: result?.step,
+        summary: result?.summary,
+        trace: result?.trace,
+        error: result?.error || null,
+      });
+    }
 
     log("END");
 

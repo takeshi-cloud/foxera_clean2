@@ -9,7 +9,7 @@ export default function PivotResearchPage() {
 
   return (
     <>
-      <Link href="/home">
+      <Link href="/">
         <div style={{
           position: "fixed",
           top: 16,

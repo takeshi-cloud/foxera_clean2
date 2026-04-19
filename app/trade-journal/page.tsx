@@ -198,7 +198,7 @@ export default function TradeJournalPage() {
   <button
     onClick={() =>
       window.location.href =
-        "/home"
+        "/"
     }
     style={{
       background: "#2563eb",

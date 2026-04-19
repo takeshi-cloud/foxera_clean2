@@ -6,15 +6,33 @@ export default function DebugPivotRadarPage() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // =========================================
+  // 🔥 データ取得（復活）
+  // =========================================
+  const load = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/pivot/radar");
+      const json = await res.json();
+
+      console.log("📊 DEBUG DATA", json);
+
+      setData(json?.results || []);
+    } catch (e) {
+      console.error("❌ fetch error", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch("/api/pivot/radar")
-      .then((res) => res.json())
-      .then((json) => {
-        setData(json.results || []);
-        setLoading(false);
-      });
+    load();
   }, []);
 
+  // =========================================
+  // 表示フォーマット
+  // =========================================
   const fmt = (v: any, d = 4) =>
     typeof v === "number" ? v.toFixed(d) : "-";
 
@@ -26,7 +44,9 @@ export default function DebugPivotRadarPage() {
     });
   };
 
-  // 🔥 ログ整形＋強調
+  // =========================================
+  // 🔥 ログ整形
+  // =========================================
   const renderTrace = (flow: any[] = []) => {
     return flow.map((f, i) => {
       const text =
@@ -51,22 +71,32 @@ export default function DebugPivotRadarPage() {
     });
   };
 
- return (
-  <div className="p-6 bg-slate-950 text-white min-h-screen">
+  // =========================================
+  // UI
+  // =========================================
+  return (
+    <div className="p-6 bg-slate-950 text-white min-h-screen">
 
-    {/* 🔥 HOMEボタン */}
-    <div className="mb-4">
-      <button
-        onClick={() => (window.location.href = "/home")}
-        className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600 transition"
-      >
-        ← HOME
-      </button>
-    </div>
+      {/* 🔥 ナビ */}
+      <div className="mb-4 flex gap-2">
+        <button
+          onClick={() => (window.location.href = "/")}
+          className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600"
+        >
+          ← HOME
+        </button>
 
-    <h1 className="text-lg font-bold mb-4">
-      🔧 Pivot Radar Debug
-    </h1>
+        <button
+          onClick={load}
+          className="rounded bg-emerald-600 px-3 py-1 text-xs hover:bg-emerald-500"
+        >
+          🔄 再取得
+        </button>
+      </div>
+
+      <h1 className="text-lg font-bold mb-4">
+        🔧 Pivot Radar Debug
+      </h1>
 
       {loading ? (
         <div>Loading...</div>
@@ -79,18 +109,13 @@ export default function DebugPivotRadarPage() {
               <tr>
                 <th className="p-2 border">Pair</th>
                 <th className="p-2 border">Step</th>
-
                 <th className="p-2 border">Price</th>
                 <th className="p-2 border">PriceTime</th>
-
                 <th className="p-2 border">X</th>
                 <th className="p-2 border">Y</th>
-
                 <th className="p-2 border">RadarTime</th>
                 <th className="p-2 border">Now(UTC)</th>
-
                 <th className="p-2 border">Trace</th>
-
                 <th className="p-2 border">Error</th>
               </tr>
             </thead>
@@ -143,12 +168,10 @@ export default function DebugPivotRadarPage() {
                       {time(s?.now?.utc)}
                     </td>
 
-                    {/* 🔥 TRACE（強調付き） */}
                     <td className="p-2 border text-[10px] text-slate-300">
                       {renderTrace(r.trace?.flow)}
                     </td>
 
-                    {/* ERROR */}
                     <td className="p-2 border text-red-400">
                       {r.error || "-"}
                     </td>

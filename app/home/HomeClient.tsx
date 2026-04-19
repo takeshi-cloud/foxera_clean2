@@ -96,16 +96,16 @@ export default function HomeClient() {
           display: "flex",
           height: "100vh",
           background: "#020617",
-          overflow: "hidden",
+           overflowX: "auto",
         }}
       >
         {/* LEFT */}
         <div
           style={{
-            width: 180,
+            width: 140,
             flexShrink: 0,
-            height: "100%",
             overflowY: "auto",
+             opacity: 0.6,  
           }}
         >
           <LeftPanel
@@ -125,10 +125,11 @@ export default function HomeClient() {
         {/* CENTER */}
         <div
           style={{
-            width: 850,
-            flexShrink: 0,
+            flex: 1,
+            minWidth:600,
             height: "100%",
             overflowY: "auto",
+             
           }}
         >
           <CenterPanel
@@ -187,10 +188,9 @@ export default function HomeClient() {
         {/* RIGHT */}
         <div
           style={{
-            width: 1000,
+            
             flexShrink: 0,
-            height: "100%",
-            overflow: "hidden",
+    overflow: "hidden",
           }}
         >
           <RightPanel />
