@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"; // ←これ追加
+
 import { NextResponse } from "next/server";
 import { chartDataBuilder } from "@/lib/chart/builders/chartDataBuilder";
 

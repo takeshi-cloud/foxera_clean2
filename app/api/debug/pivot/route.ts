@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getOrCreatePivot } from "@/lib/market/builders/pivoBuilder";
 import { nyBarsBuilder } from "@/lib/market/builders/nyBarsBuilder";
 import { getIntradayOHLC } from "@/lib/market/ingest/getIntradayOHLC";

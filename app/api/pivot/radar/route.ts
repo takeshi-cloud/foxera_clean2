@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { runOnePair } from "@/lib/market/builders/runOnePair";
 import { MARKETS } from "@/lib/constants/markets";
 import { supabase } from "@/lib/infra/supabase";

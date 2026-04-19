@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { fetchAndSave } from "@/lib/market/ingest/fetchAndSave";
 import { MARKETS } from "@/lib/constants/markets";

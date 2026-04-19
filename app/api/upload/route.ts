@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { handleUpload } from "@/app/upload/handleUpload"; // ←直せ
 

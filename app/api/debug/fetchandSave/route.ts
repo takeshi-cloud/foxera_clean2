@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { fetchAndSave } from "@/lib/market/ingest/fetchAndSave";
 
 export async function GET() {
