@@ -49,6 +49,20 @@ export const getOrCreatePivot = async (symbol: string) => {
     return {
       daily: mapPivot(daily),
       weekly: mapPivot(weekly),
+
+      // 🔥 debug追加（安全）
+      debug: {
+        source: "cache",
+        bars: null,
+        raw: {
+          daily,
+          weekly,
+        },
+        baseTime: {
+          daily: dailyBase,
+          weekly: weeklyBase,
+        },
+      },
     };
   }
 
@@ -104,7 +118,6 @@ export const getOrCreatePivot = async (symbol: string) => {
 
       log("SAVE DAILY OK");
     } else {
-      // fallback
       log("FALLBACK DAILY");
 
       const { data } = await supabase
@@ -151,7 +164,6 @@ export const getOrCreatePivot = async (symbol: string) => {
 
       log("SAVE WEEKLY OK");
     } else {
-      // fallback
       log("FALLBACK WEEKLY");
 
       const { data } = await supabase
@@ -183,6 +195,28 @@ export const getOrCreatePivot = async (symbol: string) => {
   return {
     daily: d ? mapPivot(d) : null,
     weekly: w ? mapPivot(w) : null,
+
+    // 🔥 debug追加（ここが本命）
+    debug: {
+      source: "build",
+
+      bars: bars ?? null,
+
+      raw: {
+        daily: d ?? null,
+        weekly: w ?? null,
+      },
+
+      baseTime: {
+        daily: dailyBase,
+        weekly: weeklyBase,
+      },
+
+      flags: {
+        hasDailyBars,
+        hasWeeklyBars,
+      },
+    },
   };
 };
 

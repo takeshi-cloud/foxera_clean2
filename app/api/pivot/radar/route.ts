@@ -12,9 +12,6 @@ export async function GET(req: Request) {
   const marketParam = searchParams.get("market");
   const force = searchParams.get("force") === "true";
 
-  // =========================================
-  // 対象マーケット
-  // =========================================
   const targets = marketParam
     ? MARKETS.filter((m) => m.api === marketParam)
     : MARKETS;
@@ -26,23 +23,17 @@ export async function GET(req: Request) {
 
   try {
     // =========================================
-    // ① 既存データ取得（cache判定）
+    // CACHE MAP
     // =========================================
     const { data: latestRows } = await supabase
       .from("pivot_radar_history")
       .select("symbol, price_timestamp")
-      .in(
-        "symbol",
-        targets.map((m) => m.api)
-      );
+      .in("symbol", targets.map((m) => m.api));
 
     const cacheMap = new Map(
       (latestRows || []).map((r) => [r.symbol, r])
     );
 
-    // =========================================
-    // ② 直列実行（ここだけ変更）
-    // =========================================
     const results: any[] = [];
 
     for (const m of targets) {
@@ -52,7 +43,8 @@ export async function GET(req: Request) {
 
       if (!force && cache?.price_timestamp) {
         const diffMin =
-          (Date.now() - new Date(cache.price_timestamp).getTime()) /
+          (Date.now() -
+            new Date(cache.price_timestamp).getTime()) /
           60000;
 
         if (diffMin < 5) {
@@ -61,7 +53,7 @@ export async function GET(req: Request) {
       }
 
       // =====================================
-      // SKIP（ここが重要）
+      // CACHE
       // =====================================
       if (skip) {
         log("SKIP CACHE", m.api);
@@ -79,23 +71,27 @@ export async function GET(req: Request) {
           symbol: m.api,
           key: m.key,
           step: "cache",
+
+          // 🔥 UI構造に合わせる
           summary: latest
             ? {
-                now: {
-                  utc: latest.timestamp,
-                  tokyo: latest.timestamp,
-                },
                 price: {
                   value: latest.price,
                   time: latest.price_timestamp,
                 },
+
                 radar: {
                   x: latest.x,
                   y: latest.y,
                   time: latest.timestamp,
                 },
+
+                // ❗DBに無いので一旦null
+                pivot: null,
+                ohlc: null,
               }
             : null,
+
           error: null,
         });
 
@@ -103,7 +99,7 @@ export async function GET(req: Request) {
       }
 
       // =====================================
-      // 実行
+      // RUN
       // =====================================
       log("RUN", m.api);
 
@@ -132,7 +128,6 @@ export async function GET(req: Request) {
       count: results.length,
       results,
     });
-
   } catch (e: any) {
     console.error("[RADAR API] FATAL", e);
 

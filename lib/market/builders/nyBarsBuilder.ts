@@ -29,7 +29,30 @@ export const nyBarsBuilder = async (pair: string) => {
 
     if (!intraday || intraday.length === 0) {
       log("❌ intraday empty");
-      return null;
+
+      return {
+        prevDaily: null,
+        prevWeekly: null,
+
+        // 🔥 debug追加（重要）
+        debug: {
+          range: {
+            fetchFrom: fetchFrom.toISOString(),
+            fetchTo: fetchTo.toISOString(),
+
+            dailyStart: dailyRange.start.toISOString(),
+            dailyEnd: dailyRange.end.toISOString(),
+
+            weeklyStart: weeklyRange.start.toISOString(),
+            weeklyEnd: weeklyRange.end.toISOString(),
+          },
+          counts: {
+            intraday: 0,
+            daily: 0,
+            weekly: 0,
+          },
+        },
+      };
     }
 
     // =========================
@@ -80,25 +103,54 @@ export const nyBarsBuilder = async (pair: string) => {
     // 最終
     // =========================
 
+    const result = {
+      prevDaily: prevDaily ?? null,
+      prevWeekly: prevWeekly ?? null,
+
+      // 🔥 debug追加（ここが今回の本命）
+      debug: {
+        range: {
+          fetchFrom: fetchFrom.toISOString(),
+          fetchTo: fetchTo.toISOString(),
+
+          dailyStart: dailyRange.start.toISOString(),
+          dailyEnd: dailyRange.end.toISOString(),
+
+          weeklyStart: weeklyRange.start.toISOString(),
+          weeklyEnd: weeklyRange.end.toISOString(),
+        },
+
+        counts: {
+          intraday: intraday.length,
+          daily: dailyData.length,
+          weekly: weeklyData.length,
+        },
+      },
+    };
+
     if (!prevDaily || !prevWeekly) {
       log("⚠️ PARTIAL BUILD", {
         prevDaily,
         prevWeekly,
       });
 
-      // 👉 throwしない
-      return {
-        prevDaily: prevDaily ?? null,
-        prevWeekly: prevWeekly ?? null,
-      };
+      return result;
     }
 
     log("SUCCESS nyBarsBuilder");
 
-    return { prevDaily, prevWeekly };
+    return result;
 
   } catch (e: any) {
     console.error("💥 nyBarsBuilder FATAL:", e);
-    return null;
+
+    return {
+      prevDaily: null,
+      prevWeekly: null,
+
+      debug: {
+        error: e.message,
+      },
+    };
   }
 };

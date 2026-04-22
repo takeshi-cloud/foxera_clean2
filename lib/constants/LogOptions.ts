@@ -108,3 +108,16 @@ export type ActionType = typeof ACTIONS[number];
 export const DEFAULTS = {
   phase: "Wait",
 } as const;
+
+
+// ========================================
+// 🔹 SCREENSHOT TYPE（用途）
+// ========================================
+export const SCREENSHOT_TYPES = [
+  "context",   // 環境認識
+  "entry",     // エントリー
+  "exit",      // 決済
+] as const;
+
+export type ScreenshotType =
+  typeof SCREENSHOT_TYPES[number];

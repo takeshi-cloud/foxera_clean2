@@ -86,10 +86,9 @@ export const runOnePair = async (MARKET: string) => {
     try {
       const pivotResult = await getOrCreatePivot(MARKET);
 
-      // 🔥 trace吸い上げ
       if ((pivotResult as any)?.trace?.flow) {
-  trace.flow.push(...(pivotResult as any).trace.flow);
-}
+        trace.flow.push(...(pivotResult as any).trace.flow);
+      }
 
       pivot = pivotResult;
 
@@ -98,7 +97,6 @@ export const runOnePair = async (MARKET: string) => {
         hasDaily: !!pivot?.daily,
         hasWeekly: !!pivot?.weekly,
       });
-
     } catch (e: any) {
       trace.errors.push({ step: "pivot", error: e.message });
       log("PIVOT ERROR", e.message);
@@ -182,20 +180,38 @@ export const runOnePair = async (MARKET: string) => {
     return {
       step: isFresh ? "cache" : "success",
 
-      // 🔥 これ追加（レーダー表示に必要）
+      // =========================================
+      // 🔥 DEBUG拡張（ロジック非変更）
+      // =========================================
       summary: {
         price: {
           value: priceData.price,
           time: priceData.timestamp,
         },
+
         radar: {
           x: radar.weekly.position,
           y: radar.daily.position,
           time: new Date().toISOString(),
         },
+
+        // 🔥 PIVOT中身出す（重要）
         pivot: {
+          daily: pivot.daily,
+          weekly: pivot.weekly,
           dailyDate: dailyStr,
           weeklyDate: weeklyStr,
+        },
+
+        // 🔥 OHLC（もし乗っていれば）
+        ohlc: {
+          daily: pivot.daily?.ohlc ?? null,
+          weekly: pivot.weekly?.ohlc ?? null,
+        },
+
+        // 🔥 追加：完全デバッグ用（壊さない）
+        debug: {
+          pivotRaw: pivot,
         },
       },
 

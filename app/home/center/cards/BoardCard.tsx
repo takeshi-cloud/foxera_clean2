@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { ScreenshotUploadModal } from "@/components/screenshot/ScreenshotUploadModal";
+import { ScreenshotViewerModal } from "@/components/screenshot/ScreenshotViewerModal";
 
 export const BoardCard = ({
   item,
@@ -53,19 +55,19 @@ export const BoardCard = ({
       : "#475569";
 
   const label =
-    item.direction === "long"
-      ? "L"
-      : item.direction === "short"
-      ? "S"
-      : "-";
+  item.direction === "long"
+    ? "L"
+    : item.direction === "short"
+    ? "S"
+    : "-";
 
   // =========================================
   // 🎯 共通スタイル（Rowと同一）
   // =========================================
   const baseStyle: any = {
-    width: "95%",
-    padding: "6px 8px",
-    marginTop: "6px",
+    width: "100%",
+    padding: "4px 8px",
+    marginTop: "4px",
     borderRadius: "6px",
     background: "#020617",
 
@@ -84,16 +86,21 @@ export const BoardCard = ({
     transition: "all 0.15s ease",
   };
 
-  // =========================================
-  // 🔴 SHORT
-  // =========================================
-  if (type === "short") {
-    return (
+
+  const [openUpload, setOpenUpload] = useState(false);
+const [openViewer, setOpenViewer] = useState(false);
+
+// =========================================
+// 🔴 SHORT
+// =========================================
+if (type === "short") {
+  return (
+    <>
       <div
         ref={provided?.innerRef}
         {...provided?.draggableProps}
         {...provided?.dragHandleProps}
-       onClick={onClick}
+        onClick={onClick}
         style={{
           ...baseStyle,
           ...(provided?.draggableProps?.style ?? {}),
@@ -109,7 +116,7 @@ export const BoardCard = ({
                 onToggleDirection(item);
               }}
               style={{
-                width: "26px",
+                width: "20px",
                 textAlign: "center",
                 background: bgColor,
                 color: "white",
@@ -143,32 +150,39 @@ export const BoardCard = ({
           >
             {item.tf ?? "NONE"} ▼
           </span>
+        </div>
 
-          {showTfMenu && (
-            <div style={{ position: "absolute", top: "20px", right: 0 }}>
-              {["4H", "1H", "30M", "15M", "5M"].map((tf) => (
-                <div
-                  key={tf}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onUpdateTF(item, tf);
-                    setShowTfMenu(false);
-                  }}
-                >
-                  {tf}
-                </div>
-              ))}
-            </div>
-          )}
+        {/* ボタン */}
+        <div style={{ marginTop: "6px", display: "flex", gap: "5px" ,alignItems: "center",
+    whiteSpace: "nowrap", }}>
+          <button onClick={(e) => { e.stopPropagation(); onMoveToWait(item); }}>←</button>
+          <button onClick={(e) => { e.stopPropagation(); onCreateShort(item); }}>短期</button>
+          <button onClick={(e) => { e.stopPropagation(); setOpenUpload(true); }}>📷</button>
+          <button onClick={(e) => { e.stopPropagation(); setOpenViewer(true); }}>🔗</button>
         </div>
       </div>
-    );
-  }
 
-  // =========================================
-  // 🟢 LONG
-  // =========================================
-  return (
+      {/* モーダル */}
+      <ScreenshotUploadModal
+        open={openUpload}
+        onClose={() => setOpenUpload(false)}
+        symbol={item.pair}
+      />
+
+      <ScreenshotViewerModal
+        open={openViewer}
+        onClose={() => setOpenViewer(false)}
+        symbol={item.pair}
+      />
+    </>
+  );
+}
+
+// =========================================
+// 🟢 LONG
+// =========================================
+return (
+  <>
     <div
       ref={provided?.innerRef}
       {...provided?.draggableProps}
@@ -182,71 +196,50 @@ export const BoardCard = ({
       <div style={{ display: "flex" }}>
         <b>{item.pair}</b>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleDirection(item);
-          }}
-          style={{
-            marginLeft: "auto",
-            background: bgColor,
-            color: "white",
-          }}
-        >
-          {item.direction?.toUpperCase() ?? "-"}
-        </button>
+
+        <div
+  onClick={(e) => {
+    e.stopPropagation();
+    onToggleDirection(item);
+  }}
+  style={{
+    marginLeft: "auto",
+    width: "20px",
+    textAlign: "center",
+    background: bgColor,
+    color: "white",
+    cursor: "pointer",
+  }}
+>
+  {label}
+</div>
       </div>
 
-      <div style={{ marginTop: "4px", fontSize: "11px", position: "relative" }}>
+      <div style={{ marginTop: "4px", fontSize: "11px" }}>
         {formatDate(item.event_time)}
-
-        <span
-          style={{ marginLeft: "6px", cursor: "pointer" }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowTfMenu(!showTfMenu);
-          }}
-        >
-          {item.tf ?? "NONE"} ▼
-        </span>
-
-        {showTfMenu && (
-          <div style={{ position: "absolute", top: "20px", right: 0 }}>
-            {["4H", "1H", "30M", "15M", "5M"].map((tf) => (
-              <div
-                key={tf}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onUpdateTF(item, tf);
-                  setShowTfMenu(false);
-                }}
-              >
-                {tf}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
-      <div style={{ marginTop: "8px", display: "flex", gap: "10px" }}>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onMoveToWait(item);
-          }}
-        >
-          ←
-        </button>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onCreateShort(item);
-          }}
-        >
-          短期
-        </button>
+      {/* ボタン */}
+      <div style={{ marginTop: "5px", display: "flex", gap: "5px" }}>
+        <button onClick={(e) => { e.stopPropagation(); onMoveToWait(item); }}>←</button>
+        <button onClick={(e) => { e.stopPropagation(); onCreateShort(item); }}>短期</button>
+        <button onClick={(e) => { e.stopPropagation(); setOpenUpload(true); }}>📷</button>
+        <button onClick={(e) => { e.stopPropagation(); setOpenViewer(true); }}>🔗</button>
       </div>
     </div>
-  );
+
+    {/* モーダル */}
+    <ScreenshotUploadModal
+      open={openUpload}
+      onClose={() => setOpenUpload(false)}
+      symbol={item.pair}
+    />
+
+    <ScreenshotViewerModal
+      open={openViewer}
+      onClose={() => setOpenViewer(false)}
+      symbol={item.pair}
+    />
+  </>
+);
 };

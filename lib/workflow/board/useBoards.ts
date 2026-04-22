@@ -31,7 +31,7 @@ export const useBoards = () => {
   }, []);
 
   // =====================================
-  // 📸 screenshots取得
+  // 📸 screenshots取得（既存）
   // =====================================
   const loadShots = async () => {
     const { data, error } = await supabase
@@ -51,6 +51,53 @@ export const useBoards = () => {
     loadShots();
   }, []);
 
+  // =====================================
+  // 📸 boardベースで取得（追加）
+  // =====================================
+  const loadShotsByBoards = async () => {
+    if (!boards.length) return;
+
+    const pairs = boards.map((b) => b.pair);
+
+    const today = new Date();
+    const past = new Date();
+    past.setDate(today.getDate() - 7);
+
+    const fromDate = past.toISOString().slice(0, 10);
+
+    const { data, error } = await supabase
+      .from("screenshots")
+      .select("*")
+      .in("symbol", pairs)
+      .gte("date", fromDate)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("❌ screenshots error:", error);
+      return;
+    }
+
+    setShots(data ?? []);
+  };
+
+  // 👉 board読み込み後に実行
+ useEffect(() => {
+  if (!boards.length) return;
+
+  loadShotsByBoards();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [boards.length]);
+
+  // =====================================
+  // 🖼 最新スクショ取得（追加）
+  // =====================================
+  const getLatestShot = (pair: string) => {
+    return shots.find((s) => s.symbol === pair);
+  };
+
+  // =====================================
+  // 既存
+  // =====================================
   const hasScreenshot = (pair: string, timeframeType: string) => {
     return shots.some(
       (s) =>
@@ -65,5 +112,9 @@ export const useBoards = () => {
     shots,
     loadShots,
     hasScreenshot,
+
+    // 👇追加
+    loadShotsByBoards,
+    getLatestShot,
   };
 };
