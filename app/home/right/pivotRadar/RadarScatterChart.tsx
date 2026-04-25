@@ -29,41 +29,21 @@ const labels: Record<number, string> = {
 const clamp = (value: number) =>
   Math.max(-3, Math.min(3, value));
 
-const CustomXAxisTick = ({
-  x,
-  y,
-  payload,
-}: any) => (
-  <text
-    x={x}
-    y={y + 18}
-    textAnchor="middle"
-    fill="white"
-    fontSize={14}
-  >
+const CustomXAxisTick = ({ x, y, payload }: any) => (
+  <text x={x} y={y + 18} textAnchor="middle" fill="white" fontSize={14}>
     {labels[payload.value] ?? ""}
   </text>
 );
 
-const CustomYAxisTick = ({
-  x,
-  y,
-  payload,
-}: any) => {
-  const important =
-    payload.value === 1 ||
-    payload.value === -1;
+const CustomYAxisTick = ({ x, y, payload }: any) => {
+  const important = payload.value === 1 || payload.value === -1;
 
   return (
     <text
       x={x - 10}
       y={y + 5}
       textAnchor="end"
-      fill={
-        important
-          ? "#FFD700"
-          : "white"
-      }
+      fill={important ? "#FFD700" : "white"}
       fontSize={15}
     >
       {labels[payload.value] ?? ""}
@@ -73,105 +53,101 @@ const CustomYAxisTick = ({
 
 let placedYs: number[] = [];
 
-const findAvailableY = (
-  targetY: number,
-  minGap: number
-) => {
+const findAvailableY = (targetY: number, minGap: number) => {
   let candidate = targetY;
 
   for (let i = 0; i < 30; i++) {
-    const collided =
-      placedYs.some(
-        (py) =>
-          Math.abs(py - candidate) <
-          minGap
-      );
+    const collided = placedYs.some(
+      (py) => Math.abs(py - candidate) < minGap
+    );
 
     if (!collided) break;
 
-    const direction =
-      i % 2 === 0 ? -1 : 1;
+    const direction = i % 2 === 0 ? -1 : 1;
+    const offset = Math.ceil((i + 1) / 2) * minGap;
 
-    const offset =
-      Math.ceil((i + 1) / 2) *
-      minGap;
-
-    candidate =
-      targetY +
-      direction * offset;
+    candidate = targetY + direction * offset;
   }
 
-  candidate = Math.max(
-    20,
-    Math.min(430, candidate)
-  );
-
+  candidate = Math.max(20, Math.min(430, candidate));
   placedYs.push(candidate);
 
   return candidate;
 };
 
-const CustomLabel = (
-  props: any
-) => {
-  const {
-    x,
-    y,
-    value,
-    viewBox,
-  } = props;
+// 🔥 ラベル（active対応：枠付き）
+const CustomLabel = (props: any, activePair: string) => {
+  const { x, y, value } = props;
 
-  const labelY =
-    findAvailableY(y,10);
+  // 🔥 "/"ありなし吸収
+ const normalize = (p: any) =>
+  String(p ?? "").replace("/", "");
 
-  const centerX =
-    (viewBox?.width ?? 400) / 2;
+  const isActive =
+    normalize(value) === normalize(activePair);
 
+  const labelY = findAvailableY(y, 10);
   const isRightSide = x > 250;
-
   const offsetX = 25;
 
-  const labelX = isRightSide
-  ? x + offsetX   // 右側は右へ
-  : x - offsetX;  // 左側は左へ
+  const labelX = isRightSide ? x + offsetX : x - offsetX;
+
+  // ボックスサイズ（ざっくり固定）
+  const width = 60;
+  const height = 18;
 
   return (
     <>
+      {/* 線 */}
       <line
-  x1={x + 5}
-  y1={y + 5}
-  x2={
-    isRightSide
-      ? labelX - 6
-      : labelX + 6
-  }
-  y2={labelY - 4}
-  stroke="white"
-  strokeWidth={1}
-  opacity={0.8}
-/>
+        x1={x + 5}
+        y1={y + 5}
+        x2={isRightSide ? labelX - 6 : labelX + 6}
+        y2={labelY - 4}
+        stroke={isActive ? "#ff00cc" : "white"}
+        strokeWidth={isActive ? 2 : 1}
+        opacity={0.8}
+      />
 
+      {/* 🔥 ピンク枠 */}
+      {isActive && (
+        <rect
+          x={
+            isRightSide
+              ? labelX - 4
+              : labelX - width + 4
+          }
+          y={labelY - 12}
+          width={width}
+          height={height}
+          fill="rgba(255,0,204,0.12)"
+          stroke="#ff00cc"
+          strokeWidth={1.5}
+          rx={4}
+        />
+      )}
+
+      {/* テキスト */}
       <text
-  x={labelX}
-  y={labelY}
-  fill="white"
-  fontSize={12}
-  textAnchor={
-    isRightSide
-      ? "start"
-      : "end"
-  }
->
-  {value}
-</text>
+        x={labelX}
+        y={labelY}
+        fill={isActive ? "#ff00cc" : "white"}
+        fontSize={isActive ? 13 : 12}
+        fontWeight={isActive ? "bold" : "normal"}
+        textAnchor={isRightSide ? "start" : "end"}
+      >
+        {value}
+      </text>
     </>
   );
 };
 
 export const RadarScatterChart = ({
   data,
+  activePair,
 }: {
   data: any[];
+  activePair: string;
 }) => {
   placedYs = [];
 
@@ -184,10 +160,7 @@ export const RadarScatterChart = ({
     .sort((a, b) => b.y - a.y);
 
   return (
-    <ResponsiveContainer
-      width="100%"
-      height="100%"
-    >
+    <ResponsiveContainer width="100%" height="100%">
       <ScatterChart
         margin={{
           top: 10,
@@ -202,10 +175,7 @@ export const RadarScatterChart = ({
           type="number"
           dataKey="x"
           ticks={ticks}
-          domain={[
-            -CHART_DOMAIN,
-            CHART_DOMAIN,
-          ]}
+          domain={[-CHART_DOMAIN, CHART_DOMAIN]}
           tick={<CustomXAxisTick />}
         />
 
@@ -213,34 +183,14 @@ export const RadarScatterChart = ({
           type="number"
           dataKey="y"
           ticks={ticks}
-          domain={[
-            -CHART_DOMAIN,
-            CHART_DOMAIN,
-          ]}
+          domain={[-CHART_DOMAIN, CHART_DOMAIN]}
           tick={<CustomYAxisTick />}
         />
 
-        <ReferenceLine
-          x={0}
-          stroke="#fff"
-          strokeDasharray="4 4"
-        />
-
-        <ReferenceLine
-          y={0}
-          stroke="#fff"
-          strokeDasharray="4 4"
-        />
-
-        <ReferenceLine
-          y={1}
-          stroke="#FFD700"
-        />
-
-        <ReferenceLine
-          y={-1}
-          stroke="#FFD700"
-        />
+        <ReferenceLine x={0} stroke="#fff" strokeDasharray="4 4" />
+        <ReferenceLine y={0} stroke="#fff" strokeDasharray="4 4" />
+        <ReferenceLine y={1} stroke="#FFD700" />
+        <ReferenceLine y={-1} stroke="#FFD700" />
 
         <ReferenceArea
           x1={2}
@@ -260,17 +210,38 @@ export const RadarScatterChart = ({
           fillOpacity={0.25}
         />
 
+        {/* 🔥 ここが本体 */}
         <Scatter
-          data={clampedData}
-          fill="#00ffcc"
-        >
-          <LabelList
-            dataKey="pair"
-            content={
-              <CustomLabel />
-            }
-          />
-        </Scatter>
+  data={clampedData}
+  shape={(props: any) => {
+    const { cx, cy, payload } = props;
+
+ const normalize = (p: any) =>
+  String(p ?? "").replace("/", "");
+
+const isActive =
+  normalize(payload.pair) === normalize(activePair);
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={isActive ? 6 : 4}
+        fill={
+          isActive
+            ? "#ff00cc"
+            : "#00ffcc"
+        }
+      />
+    );
+  }}
+>
+  <LabelList
+    dataKey="pair"
+    content={(props) =>
+      CustomLabel(props, activePair)
+    }
+  />
+</Scatter>
       </ScatterChart>
     </ResponsiveContainer>
   );

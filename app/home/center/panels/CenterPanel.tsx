@@ -67,10 +67,12 @@ export const CenterPanel = ({
   );
 
   const getPhaseBg = (phase: string) => {
-  if (phase === "Trigger") return "rgba(229, 255, 0, 0.2)";   // 薄い黄色
-  if (phase === "Pullback") return "rgba(34, 224, 238, 0.2)"; // 薄い水色
+  if (phase === "Trigger") return "#eab308";   // 薄い黄色
+  if (phase === "Pullback") return "#06b6d4"; // 薄い水色
   return "#0f172a"; // デフォルト
 };
+
+
 
 
   

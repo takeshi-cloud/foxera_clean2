@@ -11,14 +11,17 @@ type RadarPoint = {
   timestamp: string;
 };
 
-export const RadarPanel = () => {
+export const RadarPanel = ({
+  activePair,
+}: {
+  activePair: string;
+}) => {
   const [data, setData] = useState<RadarPoint[]>([]);
   const [loading, setLoading] = useState(false);
-
   const [updatedAt, setUpdatedAt] = useState("");
 
   // ========================================
-  // Radar Load（DB → get）
+  // Radar Load
   // ========================================
   const loadRadar = async () => {
     try {
@@ -26,11 +29,8 @@ export const RadarPanel = () => {
 
       const rows = await getRadarScatter();
 
-      console.log("📡 scatter rows:", rows);
-
       setData(rows);
 
-      // 最新時刻
       if (rows.length > 0) {
         const latest = rows[0];
 
@@ -49,7 +49,6 @@ export const RadarPanel = () => {
       } else {
         setUpdatedAt("");
       }
-
     } catch (e) {
       console.error("❌ Radar load failed:", e);
       setData([]);
@@ -59,13 +58,12 @@ export const RadarPanel = () => {
   };
 
   // ========================================
-  // 初回 + 更新イベント
+  // 初回 + イベント
   // ========================================
   useEffect(() => {
     loadRadar();
 
     const handler = () => {
-      console.log("📡 load-radar → reload");
       loadRadar();
     };
 
@@ -107,7 +105,10 @@ export const RadarPanel = () => {
         {loading ? (
           <div>Loading...</div>
         ) : (
-          <RadarScatterChart data={data} />
+          <RadarScatterChart
+            data={data}
+            activePair={activePair}
+          />
         )}
       </div>
     </div>

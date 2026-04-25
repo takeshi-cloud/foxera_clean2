@@ -2,26 +2,21 @@
 
 import { useEffect, useState } from "react";
 
-export function MAStructurePanel() {
-  const [rows, setRows] =
-    useState<any[]>([]);
-
-  const [baseTime, setBaseTime] =
-    useState("");
+export function MAStructurePanel({
+  activePair,
+}: {
+  activePair: string;
+}) {
+  const [rows, setRows] = useState<any[]>([]);
+  const [baseTime, setBaseTime] = useState("");
 
   const loadLatest = async () => {
     try {
-      const res = await fetch(
-        "/api/ma/latest"
-      );
-
-      const json =
-        await res.json();
+      const res = await fetch("/api/ma/latest");
+      const json = await res.json();
 
       setRows(json.rows || []);
-      setBaseTime(
-        json.baseTime || ""
-      );
+      setBaseTime(json.baseTime || "");
     } catch (err) {
       console.error(err);
     }
@@ -30,21 +25,14 @@ export function MAStructurePanel() {
   useEffect(() => {
     loadLatest();
 
-    const handleLoadMA =
-      async () => {
-        await loadLatest();
-      };
+    const handleLoadMA = async () => {
+      await loadLatest();
+    };
 
-    window.addEventListener(
-      "load-ma",
-      handleLoadMA
-    );
+    window.addEventListener("load-ma", handleLoadMA);
 
     return () => {
-      window.removeEventListener(
-        "load-ma",
-        handleLoadMA
-      );
+      window.removeEventListener("load-ma", handleLoadMA);
     };
   }, []);
 
@@ -80,11 +68,7 @@ export function MAStructurePanel() {
       >
         更新時刻：
         {baseTime
-          ? new Date(
-              baseTime
-            ).toLocaleString(
-              "ja-JP"
-            )
+          ? new Date(baseTime).toLocaleString("ja-JP")
           : "-"}
       </div>
 
@@ -99,6 +83,7 @@ export function MAStructurePanel() {
           <MAListRow
             key={row.pair}
             row={row}
+            activePair={activePair} // ← ここだけ追加
           />
         ))}
       </div>
@@ -108,18 +93,25 @@ export function MAStructurePanel() {
 
 function MAListRow({
   row,
+  activePair,
 }: {
   row: any;
+  activePair: string;
 }) {
+  // 🔥 normalize（/問題対策）
+ const normalize = (p: any) =>
+  String(p ?? "").replace("/", "");
+
+  const isActive =
+    normalize(row.pair) === normalize(activePair);
+
   if (!row.structure_order) {
     return (
       <div
         style={{
-          background:
-            "#7f1d1d",
+          background: "#7f1d1d",
           color: "white",
-          padding:
-            "8px 10px",
+          padding: "8px 10px",
           borderRadius: 6,
           fontSize: 14,
         }}
@@ -129,56 +121,65 @@ function MAListRow({
     );
   }
 
-  const slopeMap: Record<
-    string,
-    string
-  > = {
+  const slopeMap: Record<string, string> = {
     "15M":
-      row.ma_now_15 >
-      row.ma_prev_15
+      row.ma_now_15 > row.ma_prev_15
         ? "⇧"
         : "⇩",
-
     "1H":
-      row.ma_now_1h >
-      row.ma_prev_1h
+      row.ma_now_1h > row.ma_prev_1h
         ? "⇧"
         : "⇩",
-
     "4H":
-      row.ma_now_4h >
-      row.ma_prev_4h
+      row.ma_now_4h > row.ma_prev_4h
         ? "⇧"
         : "⇩",
   };
 
-  const ordered = [
-    ...row.structure_order,
-  ].reverse();
+  const ordered = [...row.structure_order].reverse();
 
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns:
-          "72px 1fr",
+        gridTemplateColumns: "72px 1fr",
         alignItems: "center",
         gap: 10,
-        background: "#1e293b",
+
+        background: "#020617", // ← カードと統一
+
         borderRadius: 6,
         padding: "4px 10px",
         fontSize: 16,
+
+        border: isActive
+          ? "2px solid #ff00cc"
+          : "1px solid #1e293b",
+
+        boxShadow: isActive
+          ? "0 0 0 2px #ff00cc, 0 0 16px #ff00cc"
+          : "none",
+
+        transform: isActive
+          ? "scale(1.01)"
+          : "scale(1)",
+
+        zIndex: isActive ? 10 : 1,
+
+        transition: "all 0.2s ease",
       }}
     >
+      {/* ペア */}
       <div
         style={{
           fontWeight: "bold",
-          color: "white",
+          color: isActive ? "#ff00cc" : "white",
         }}
       >
         {row.pair}
       </div>
 
+      {/* 構造 */}
       <div
         style={{
           display: "flex",
@@ -187,70 +188,41 @@ function MAListRow({
           alignItems: "center",
         }}
       >
-        {ordered.map(
-          (
-            item: string,
-            index: number
-          ) => {
-            if (
-              item === "PRICE"
-            ) {
-              return (
-                <span
-                  key={item}
-                  style={{
-                    color:
-                      "#60a5fa",
-                    fontWeight:
-                      "bold",
-                  }}
-                >
-                  PRICE
-                  {index <
-                    ordered.length -
-                      1 &&
-                    " <"}
-                </span>
-              );
-            }
-
+        {ordered.map((item: string, index: number) => {
+          if (item === "PRICE") {
             return (
               <span
                 key={item}
                 style={{
-                  color:
-                    "white",
+                  color: "#60a5fa",
+                  fontWeight: "bold",
                 }}
               >
-                {item}
-                <span
-                  style={{
-                    color:
-                      slopeMap[
-                        item
-                      ] ===
-                      "⇧"
-                        ? "#4ade80"
-                        : "#f87171",
-                    fontWeight:
-                      "bold",
-                  }}
-                >
-                  {" "}
-                  {
-                    slopeMap[
-                      item
-                    ]
-                  }
-                </span>
-                {index <
-                  ordered.length -
-                    1 &&
-                  " <"}
+                PRICE
+                {index < ordered.length - 1 && " <"}
               </span>
             );
           }
-        )}
+
+          return (
+            <span key={item} style={{ color: "white" }}>
+              {item}
+              <span
+                style={{
+                  color:
+                    slopeMap[item] === "⇧"
+                      ? "#4ade80"
+                      : "#f87171",
+                  fontWeight: "bold",
+                }}
+              >
+                {" "}
+                {slopeMap[item]}
+              </span>
+              {index < ordered.length - 1 && " <"}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

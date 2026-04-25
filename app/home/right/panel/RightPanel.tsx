@@ -5,8 +5,14 @@ import { MAStatusBar } from "../ma/MAStatusBar";
 import { RadarPanel } from "../pivotRadar/RadarPanel";
 import { MAStructurePanel } from "../ma/MAStructurePanel";
 import { HomeChartPanel } from "../charts/HomeChartPanel";
+import { ScreenshotPanel } from "../screenshot/ScreenshotPanel";
 
-export const RightPanel = () => {
+export const RightPanel = ({
+  activePair,
+
+}: {
+  activePair: string;
+}) => {
   return (
     <div
       style={{
@@ -33,8 +39,7 @@ export const RightPanel = () => {
             flexShrink: 0,
           }}
         >
-          <PivotStatusBar />
-          <MAStatusBar />
+      
         </div>
 
         {/* 中段 */}
@@ -48,8 +53,11 @@ export const RightPanel = () => {
             overflow: "visible",
           }}
         >
-          <RadarPanel />
-          <MAStructurePanel />
+          <RadarPanel
+            activePair={activePair}
+          />
+
+          <MAStructurePanel activePair={activePair} />
         </div>
 
         {/* 下段 */}
@@ -63,8 +71,9 @@ export const RightPanel = () => {
             overflow: "hidden",
           }}
         >
-          <HomeChartPanel />
-          <HomeChartPanel />
+          <ScreenshotPanel activePair={activePair} />
+
+          <HomeChartPanel activePair={activePair} />
         </div>
       </div>
     </div>

@@ -87,115 +87,79 @@ export default function HomeClient() {
       );
     };
 
-  return (
-    <DragDropContext
-      onDragEnd={onDragEnd}
+return (
+  <DragDropContext onDragEnd={onDragEnd}>
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        background: "#020617",
+        overflowX: "auto",
+      }}
     >
+      {/* LEFT */}
       <div
         style={{
-          display: "flex",
-          height: "100vh",
-          background: "#020617",
-           overflowX: "auto",
+          flex: 1.2,              // ← 少しだけ伸びる
+          minWidth: 140,
+          maxWidth: 190,          // ← ちょい広げる上限
+          overflow: "auto",
+          opacity: 0.6,
         }}
       >
-        {/* LEFT */}
-        <div
-          style={{
-            width: 140,
-            flexShrink: 0,
-            overflowY: "auto",
-             opacity: 0.6,  
-          }}
-        >
-          <LeftPanel
-            wait={mergedBoards}
-            market={market}
-            cursor={cursor}
-            setCursor={setCursor}
-            onRemove={(item) =>
-              handleRemove(
-                item,
-                load
-              )
-            }
-          />
-        </div>
-
-        {/* CENTER */}
-        <div
-          style={{
-            flex: 1,
-            minWidth:650,
-            height: "100%",
-            overflowY: "auto",
-             
-          }}
-        >
-          <CenterPanel
-            boards={boards}
-            screenshots={shots}
-            activePair={
-              activePair
-            }
-            setActivePair={
-              setActivePair
-            }
-            onToggleDirection={(
-              item
-            ) =>
-              handleToggleDirection(
-                item,
-                load
-              )
-            }
-            onRemove={(item) =>
-              handleRemove(
-                item,
-                load
-              )
-            }
-            onMoveToWait={(
-              item
-            ) =>
-              handleMoveToWait(
-                item,
-                load
-              )
-            }
-            onCreateShort={(
-              item
-            ) =>
-              handleCreateShort(
-                item,
-                load,
-                boards
-              )
-            }
-            onUpdateTF={(
-              item,
-              tf
-            ) =>
-              handleUpdateTF(
-                item,
-                tf,
-                load
-              )
-            }
-          />
-        </div>
-
-        {/* RIGHT */}
-        <div
-          style={{
-            
-            flexShrink: 0,
-    overflow: "hidden",
-          }}
-        >
-          <RightPanel />
-        </div>
+        <LeftPanel
+          wait={mergedBoards}
+          market={market}
+          cursor={cursor}
+          setCursor={setCursor}
+          activePair={activePair}
+          setActivePair={setActivePair}
+          onRemove={(item) => handleRemove(item, load)}
+        />
       </div>
-    </DragDropContext>
-  );
+
+      {/* CENTER（主役） */}
+      <div
+        style={{
+          flex: 2,                // ← ここが主役（伸びる）
+          minWidth: 620,
+          maxWidth: 720,          // ← ここで止める（超重要）
+          height: "100%",
+          overflowY: "auto",
+        }}
+      >
+        <CenterPanel
+          boards={boards}
+          screenshots={shots}
+          activePair={activePair}
+          setActivePair={setActivePair}
+          onToggleDirection={(item) =>
+            handleToggleDirection(item, load)
+          }
+          onRemove={(item) => handleRemove(item, load)}
+          onMoveToWait={(item) =>
+            handleMoveToWait(item, load)
+          }
+          onCreateShort={(item) =>
+            handleCreateShort(item, load, boards)
+          }
+          onUpdateTF={(item, tf) =>
+            handleUpdateTF(item, tf, load)
+          }
+        />
+      </div>
+
+      {/* RIGHT */}
+      <div
+        style={{
+          flex: 1,                // ← 残りを吸う
+          minWidth: 1200,          // ← iPadで“はみ出し”維持
+          overflow: "flex",
+        }}
+      >
+        <RightPanel activePair={activePair} />
+      </div>
+    </div>
+  </DragDropContext>
+);
 }

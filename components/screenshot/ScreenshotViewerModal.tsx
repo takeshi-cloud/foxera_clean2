@@ -45,7 +45,7 @@ export const ScreenshotViewerModal = ({ open, onClose, symbol }: any) => {
   }, [open]);
 
   const getUrl = (path: string) =>
-    supabase.storage.from("screenshots").getPublicUrl(path).data.publicUrl;
+  supabase.storage.from("images").getPublicUrl(path).data.publicUrl;
 
   // 日付整形
   const formatDate = (d: string) =>

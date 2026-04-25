@@ -20,12 +20,26 @@ export const getMode = () => MODE;
 
 
 // -----------------------------------------
-// ⏱ event_time生成
+// ⏱ event_time生成（修正版）
 // -----------------------------------------
 const buildEventTime = (input?: string) => {
+  // 入力なし → 今
   if (!input) return new Date().toISOString();
 
-  return new Date(input).toISOString(); // ←🔥シンプルにこれだけ
+  // 🔥 YYYY-MM-DD だけ来た場合（←今回の本質）
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    return `${input}T00:00:00`;
+  }
+
+  const d = new Date(input);
+
+  // 🔥 壊れ防止（最重要）
+  if (isNaN(d.getTime())) {
+    console.error("❌ invalid event_time:", input);
+    return new Date().toISOString();
+  }
+
+  return d.toISOString();
 };
 
 
@@ -43,10 +57,8 @@ export const createLog = async (
     event_time?: string;
     force_update?: boolean;
     [key: string]: any;
-    
   },
-  source: LogSourceType // 🔥ここ重要
-  
+  source: LogSourceType
 ) => {
   try {
     // =====================================
@@ -62,18 +74,18 @@ export const createLog = async (
     // =====================================
     const pair = log.pair?.replace("/", "").toUpperCase();
     const timeframe_type = log.timeframe_type?.toUpperCase();
+
     let direction =
-  log.direction !== undefined
-    ? log.direction?.toLowerCase()
-    : undefined;
+      log.direction !== undefined
+        ? log.direction?.toLowerCase()
+        : undefined;
 
-let phase = log.phase ?? "Wait";
-
+    let phase = log.phase ?? "Wait";
 
     if (log.action === "move_to_wait") {
-  phase = "Wait";
-  direction = null; // ←🔥これが本命
-}
+      phase = "Wait";
+      direction = null;
+    }
 
     // =====================================
     // ⏱ event_time
@@ -81,21 +93,17 @@ let phase = log.phase ?? "Wait";
     const event_time = buildEventTime(log.event_time);
 
     // =====================================
-    // 🔥 payload（ここ修正ポイント）
+    // 🔥 payload
     // =====================================
     const payload = {
       ...log,
-
       pair,
       timeframe_type,
       direction,
       phase,
-
-      source, // 🔥これ追加（必須）
-
+      source,
       action: log.action ?? "board_update",
       note: log.note ?? "",
-
       event_time,
       force_update: log.force_update ?? false,
     };

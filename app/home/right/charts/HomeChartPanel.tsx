@@ -3,6 +3,7 @@
 import {
   useEffect,
   useState,
+  useRef,
 } from "react";
 
 import { HomeChartControls } from "./HomeChartControls";
@@ -11,9 +12,13 @@ import { HomeChartLayout } from "./HomeChartLayout";
 import { calcZigzag } from "@/lib/chart/zigzag/calcZigzag";
 import { mergeData } from "@/lib/chart/mergeData";
 
-export function HomeChartPanel() {
+export function HomeChartPanel({
+  activePair,
+}: {
+  activePair: string;
+}) {
   const [symbol, setSymbol] =
-    useState("GBP/JPY");
+    useState(activePair || "GBP/JPY");
 
   const [tf, setTf] =
     useState("1h");
@@ -23,8 +28,7 @@ export function HomeChartPanel() {
     .slice(0, 10);
 
   const twoDaysAgo = new Date(
-    Date.now() -
-      1000 * 60 * 60 * 24 * 2
+    Date.now() - 1000 * 60 * 60 * 24 * 2
   )
     .toISOString()
     .slice(0, 10);
@@ -47,20 +51,37 @@ export function HomeChartPanel() {
   const [loading, setLoading] =
     useState(false);
 
-  useEffect(() => {
-    console.log(
-      "HomeChartPanel showZigzag:",
-      showZigzag
-    );
-  }, [showZigzag]);
+  const timerRef = useRef<any>(null);
 
-  const handleLoad = async () => {
+  const formatSymbol = (pair: string) => {
+  if (!pair) return "";
+
+  if (pair.includes("/")) return pair;
+
+  return pair.slice(0, 3) + "/" + pair.slice(3);
+};
+
+  // =============================
+  // 🔥 activePair → symbol反映
+  // =============================
+  useEffect(() => {
+  if (!activePair) return;
+
+  setSymbol(formatSymbol(activePair)); // ←ここ
+}, [activePair]);
+
+  // =============================
+  // 🔥 APIロード
+  // =============================
+  const handleLoad = async (
+    targetSymbol: string
+  ) => {
     setLoading(true);
 
     try {
       const params =
         new URLSearchParams({
-          symbol,
+          symbol: targetSymbol,
           tf,
           start: startDate,
           end: endDate,
@@ -70,27 +91,13 @@ export function HomeChartPanel() {
         `/api/chart?${params.toString()}`
       );
 
-      const json =
-        await res.json();
-
-      console.log(
-        "HOME CHART RAW:",
-        json[0]
-      );
+      const json = await res.json();
 
       const zigzagData =
         calcZigzag(json);
 
       const mergedData =
-        mergeData(
-          json,
-          zigzagData
-        );
-
-      console.log(
-        "HOME CHART MERGED:",
-        mergedData[0]
-      );
+        mergeData(json, zigzagData);
 
       setMerged(mergedData);
     } catch (e) {
@@ -100,9 +107,28 @@ export function HomeChartPanel() {
     }
   };
 
+  // =============================
+  // 🔥 debounce付き自動ロード
+  // =============================
   useEffect(() => {
-    handleLoad();
-  }, []);
+    if (!symbol) return;
+
+    // 前の予約キャンセル
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    // 200ms後に実行
+    timerRef.current = setTimeout(() => {
+      handleLoad(symbol);
+    }, 200);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [symbol, tf, startDate, endDate]);
 
   return (
     <div
@@ -132,7 +158,7 @@ export function HomeChartPanel() {
         onEndDateChange={setEndDate}
         onShowLineChange={setShowLine}
         onShowZigzagChange={setShowZigzag}
-        onLoad={handleLoad}
+        onLoad={() => handleLoad(symbol)}
       />
 
       <HomeChartLayout

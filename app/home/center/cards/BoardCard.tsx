@@ -2,44 +2,27 @@
 
 import { useState } from "react";
 import { ScreenshotUploadModal } from "@/components/screenshot/ScreenshotUploadModal";
-import { ScreenshotViewerModal } from "@/components/screenshot/ScreenshotViewerModal";
 
 export const BoardCard = ({
   item,
-  screenshots,
   provided,
   type,
-
-  // 👇 受け取る
-  activePair,
-  setActivePair,
   active,
   onClick,
   onToggleDirection,
   onRemove,
-  onMoveToWait,
-  onCreateShort,
-  onUpdateTF,
 }: any) => {
 
- const formatDate = (dateStr: string | null) => {
-  if (!dateStr) return "----.--.--";
-  return dateStr.slice(0, 10).replace(/-/g, ".");
-};
-  const [showTfMenu, setShowTfMenu] = useState(false);
-  console.log("ITEM:", item);
-
-  // =========================================
-  // 🔥 ACTIVE（Rowと同じロジック）
-  // =========================================
-  const normalize = (pair: string) =>
-    pair?.replace("/", "").toUpperCase();
+  // =============================
+  // Utils
+  // =============================
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "--.--";
+    return dateStr.slice(5, 10).replace("-", ".");
+  };
 
   const isActive = active;
 
-  // =========================================
-  // 🎨 direction UI
-  // =========================================
   const borderColor =
     item.direction === "long"
       ? "#22c55e"
@@ -55,45 +38,108 @@ export const BoardCard = ({
       : "#475569";
 
   const label =
-  item.direction === "long"
-    ? "L"
-    : item.direction === "short"
-    ? "S"
-    : "-";
-
-  // =========================================
-  // 🎯 共通スタイル（Rowと同一）
-  // =========================================
-  const baseStyle: any = {
-    width: "100%",
-    padding: "4px 8px",
-    marginTop: "4px",
-    borderRadius: "6px",
-    background: "#020617",
-
-    border: isActive
-      ? "2px solid #ff4d6d"
-      : `2px solid ${borderColor}`,
-
-    boxShadow: isActive
-  ? "0 0 0 3px #ff00cc, 0 0 20px #ff00cc, 0 0 40px #ff4d6d"
-  : "none",
-
-    transform: isActive ? "scale(1.02)" : "scale(1)",
-    zIndex: isActive ? 10 : 1,
-
-    cursor: "pointer",
-    transition: "all 0.15s ease",
-  };
-
+    item.direction === "long"
+      ? "L"
+      : item.direction === "short"
+      ? "S"
+      : "-";
 
   const [openUpload, setOpenUpload] = useState(false);
-const [openViewer, setOpenViewer] = useState(false);
 
-// =========================================
-// 🔴 SHORT
-// =========================================
-if (type === "short") {
+  // =============================
+  // Styles（全部ここに集約）
+  // =============================
+  const styles = {
+    card: {
+      width: "100%",
+      padding: "2px 5px",
+      marginTop: "2x",
+      borderRadius: "6px",
+      background: "#020617",
+      border: isActive
+        ? "2px solid #ff4d6d"
+        : `2px solid ${borderColor}`,
+      boxShadow: isActive
+        ? "0 0 0 3px #ff00cc, 0 0 20px #ff00cc"
+        : "none",
+      transform: isActive ? "scale(1.02)" : "scale(1)",
+      zIndex: isActive ? 10 : 1,
+      cursor: "pointer",
+      transition: "all 0.15s ease",
+    },
+
+    rowTop: {
+      display: "flex",
+      alignItems: "center", // ←ズレ防止
+    },
+
+    pair: {
+      fontSize: "15px",
+      letterSpacing: "0.5px",
+      fontWeight: 600,
+    },
+
+    rightGroup: {
+      marginLeft: "auto",
+      display: "flex",
+      gap: "10px",
+      alignItems: "center",
+    },
+
+    directionBox: {
+      width: "18px",
+      height: "18px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "white",
+      fontSize: "17px",
+      borderRadius: "4px",
+      cursor: "pointer",
+    },
+
+    remove: {
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+    },
+
+    rowMid: {
+      marginTop: "2px",
+      fontSize: "14px",
+      display: "flex",
+      alignItems: "center",
+    },
+
+    tf: {
+      marginLeft: "6px",
+    },
+
+    upload: {
+      marginLeft: "auto",
+    },
+
+    noteRow: {
+      marginTop: "2px",
+      fontSize: "14px",
+      display: "flex",
+      alignItems: "center",
+      gap: "2px",
+      width: "100%",
+      overflow: "hidden",
+    },
+
+    noteText: {
+      flex: 1,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+    },
+  };
+
+  // =============================
+  // UI
+  // =============================
   return (
     <>
       <div
@@ -102,144 +148,77 @@ if (type === "short") {
         {...provided?.dragHandleProps}
         onClick={onClick}
         style={{
-          ...baseStyle,
+          ...styles.card,
           ...(provided?.draggableProps?.style ?? {}),
         }}
       >
-        <div style={{ display: "flex", width: "100%" }}>
-          <b>{item.pair}</b>
+        {/* ========= 上段 ========= */}
+        <div style={styles.rowTop}>
+          <div style={styles.pair}>{item.pair}</div>
 
-          <div style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
+          <div style={styles.rightGroup}>
+            {/* L/S */}
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleDirection(item);
               }}
               style={{
-                width: "20px",
-                textAlign: "center",
+                ...styles.directionBox,
                 background: bgColor,
-                color: "white",
-                cursor: "pointer",
               }}
             >
               {label}
             </div>
 
+            {/* × */}
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 onRemove(item);
               }}
-              style={{ cursor: "pointer" }}
+              style={styles.remove}
             >
               ×
             </div>
           </div>
         </div>
 
-        <div style={{ marginTop: "4px", fontSize: "11px", position: "relative" }}>
+        {/* ========= 中段 ========= */}
+        <div style={styles.rowMid}>
           {formatDate(item.event_time)}
 
-          <span
-            style={{ marginLeft: "6px", cursor: "pointer" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowTfMenu(!showTfMenu);
-            }}
-          >
-            {item.tf ?? "NONE"} ▼
+          <span style={styles.tf}>
+            {item.tf ?? ""}
           </span>
+
+          <div style={styles.upload}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenUpload(true);
+              }}
+            >
+              📷
+            </button>
+          </div>
         </div>
 
-        {/* ボタン */}
-        <div style={{ marginTop: "6px", display: "flex", gap: "5px" ,alignItems: "center",
-    whiteSpace: "nowrap", }}>
-          <button onClick={(e) => { e.stopPropagation(); onMoveToWait(item); }}>←</button>
-          <button onClick={(e) => { e.stopPropagation(); onCreateShort(item); }}>短期</button>
-          <button onClick={(e) => { e.stopPropagation(); setOpenUpload(true); }}>📷</button>
-          <button onClick={(e) => { e.stopPropagation(); setOpenViewer(true); }}>🔗</button>
+        {/* ========= NOTE ========= */}
+        <div style={styles.noteRow}>
+          <span>📝</span>
+          <span style={styles.noteText}>
+            {item.note || ""}
+          </span>
         </div>
       </div>
 
-      {/* モーダル */}
+      {/* ========= Modal ========= */}
       <ScreenshotUploadModal
         open={openUpload}
         onClose={() => setOpenUpload(false)}
         symbol={item.pair}
       />
-
-      <ScreenshotViewerModal
-        open={openViewer}
-        onClose={() => setOpenViewer(false)}
-        symbol={item.pair}
-      />
     </>
   );
-}
-
-// =========================================
-// 🟢 LONG
-// =========================================
-return (
-  <>
-    <div
-      ref={provided?.innerRef}
-      {...provided?.draggableProps}
-      {...provided?.dragHandleProps}
-      onClick={onClick}
-      style={{
-        ...baseStyle,
-        ...(provided?.draggableProps?.style ?? {}),
-      }}
-    >
-      <div style={{ display: "flex" }}>
-        <b>{item.pair}</b>
-
-
-        <div
-  onClick={(e) => {
-    e.stopPropagation();
-    onToggleDirection(item);
-  }}
-  style={{
-    marginLeft: "auto",
-    width: "20px",
-    textAlign: "center",
-    background: bgColor,
-    color: "white",
-    cursor: "pointer",
-  }}
->
-  {label}
-</div>
-      </div>
-
-      <div style={{ marginTop: "4px", fontSize: "11px" }}>
-        {formatDate(item.event_time)}
-      </div>
-
-      {/* ボタン */}
-      <div style={{ marginTop: "5px", display: "flex", gap: "5px" }}>
-        <button onClick={(e) => { e.stopPropagation(); onMoveToWait(item); }}>←</button>
-        <button onClick={(e) => { e.stopPropagation(); onCreateShort(item); }}>短期</button>
-        <button onClick={(e) => { e.stopPropagation(); setOpenUpload(true); }}>📷</button>
-        <button onClick={(e) => { e.stopPropagation(); setOpenViewer(true); }}>🔗</button>
-      </div>
-    </div>
-
-    {/* モーダル */}
-    <ScreenshotUploadModal
-      open={openUpload}
-      onClose={() => setOpenUpload(false)}
-      symbol={item.pair}
-    />
-
-    <ScreenshotViewerModal
-      open={openViewer}
-      onClose={() => setOpenViewer(false)}
-      symbol={item.pair}
-    />
-  </>
-);
 };

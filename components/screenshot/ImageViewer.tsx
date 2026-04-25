@@ -1,87 +1,196 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ImageViewer({ src }: { src: string }) {
   const [scale, setScale] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [origin, setOrigin] = useState({ x: 0, y: 0 });
+
   const [isDragging, setIsDragging] = useState(false);
   const [start, setStart] = useState({ x: 0, y: 0 });
 
-  // 🔍 ホイールズーム
+  const [fitScale, setFitScale] = useState(1);
+  const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
+
+  // =============================
+  // 🔥 マウス離したら必ず解除
+  // =============================
+  useEffect(() => {
+    const handleUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener("mouseup", handleUp);
+    return () => {
+      window.removeEventListener("mouseup", handleUp);
+    };
+  }, []);
+
+  // =============================
+  // 🔍 ズーム
+  // =============================
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
 
-    const rect = e.currentTarget.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-
-    setOrigin({ x: offsetX, y: offsetY });
-
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setScale((prev) => Math.min(Math.max(prev + delta, 0.5), 5));
+
+    setScale((prev) => {
+      const next = prev + delta;
+
+      // 🔥 最小はfitScale（これで消えない）
+      return Math.min(Math.max(next, fitScale), 5);
+    });
   };
 
+  // =============================
   // ✋ ドラッグ
+  // =============================
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale <= fitScale * 1.01) return;
+
     setIsDragging(true);
-    setStart({ x: e.clientX - pos.x, y: e.clientY - pos.y });
+    setStart({
+      x: e.clientX - pos.x,
+      y: e.clientY - pos.y,
+    });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
-    setPos({ x: e.clientX - start.x, y: e.clientY - start.y });
+
+    const nextX = e.clientX - start.x;
+    const nextY = e.clientY - start.y;
+
+    setPos(clamp(nextX, nextY));
   };
 
-  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
-  // 🖱 ダブルクリック
-  const handleDoubleClick = () => {
-    if (scale === 1) {
-      setScale(2);
-    } else {
-      setScale(1);
-      setPos({ x: 0, y: 0 });
+  // =============================
+  // 🔥 位置制限
+  // =============================
+  const clamp = (x: number, y: number) => {
+    const container = document.getElementById("viewer-root");
+    if (!container) return { x, y };
+
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+
+    const imgW = imgSize.w * scale;
+    const imgH = imgSize.h * scale;
+
+    const centerX = (cw - imgW) / 2;
+    const centerY = (ch - imgH) / 2;
+
+    if (imgW > cw || imgH > ch) {
+      return {
+        x: Math.min(centerX + (imgW - cw) / 2, Math.max(centerX - (imgW - cw) / 2, x)),
+        y: Math.min(centerY + (imgH - ch) / 2, Math.max(centerY - (imgH - ch) / 2, y)),
+      };
     }
+
+    return { x: centerX, y: centerY };
   };
 
+  // =============================
+  // 🔥 リセットボタン
+  // =============================
+  const resetView = () => {
+    const container = document.getElementById("viewer-root");
+    if (!container) return;
+
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+
+    const fit = fitScale;
+
+    setScale(fit);
+
+    setPos({
+      x: (cw - imgSize.w * fit) / 2,
+      y: (ch - imgSize.h * fit) / 2,
+    });
+  };
+
+  // =============================
+  // 🎨 UI
+  // =============================
   return (
     <div
+      id="viewer-root"
+      onWheel={handleWheel}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
       style={{
         width: "100%",
         height: "100%",
         overflow: "hidden",
         position: "relative",
         background: "#000",
+        cursor: isDragging ? "grabbing" : "grab",
       }}
     >
-      {/* 操作レイヤー（←ここが最重要） */}
-      <div
+      {/* 🔥 リセットボタン */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          resetView();
+        }}
         style={{
           position: "absolute",
-          inset: 0,
-          cursor: isDragging ? "grabbing" : "grab",
+          bottom: 10,
+          right: 10,
+          zIndex: 10,
+          background: "rgba(0,0,0,0.6)",
+          border: "1px solid #555",
+          color: "#fff",
+          padding: "4px 8px",
+          cursor: "pointer",
         }}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onDoubleClick={handleDoubleClick} // ← ★ここに移動
-      />
+      >
+        ⤾
+      </button>
 
-      {/* 画像 */}
       <img
         src={src}
+        onLoad={(e) => {
+          const img = e.currentTarget;
+          const container = img.parentElement;
+          if (!container) return;
+
+          const cw = container.clientWidth;
+          const ch = container.clientHeight;
+
+          setImgSize({
+            w: img.naturalWidth,
+            h: img.naturalHeight,
+          });
+
+          const fit = Math.min(
+            cw / img.naturalWidth,
+            ch / img.naturalHeight
+          );
+
+          setFitScale(fit);
+          setScale(fit);
+
+          setPos({
+            x: (cw - img.naturalWidth * fit) / 2,
+            y: (ch - img.naturalHeight * fit) / 2,
+          });
+        }}
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
-          transformOrigin: `${origin.x}px ${origin.y}px`,
+          transformOrigin: "top left",
+          pointerEvents: "none",
           maxWidth: "none",
-          pointerEvents: "none", // ← これはそのままでOK
           userSelect: "none",
         }}
       />
