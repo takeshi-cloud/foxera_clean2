@@ -109,12 +109,13 @@ export const LeftPanel = ({
           <div>
             <div style={{ fontSize: "14px", opacity: 0.5 }}>MENU</div>
 
-            <Link href="/upload"><div className="menuBtn">📤 アップロード</div></Link>
-            <Link href="/event_logs"><div className="menuBtn">📊 EVENT_LOG</div></Link>
-            <Link href="/login"><div className="menuBtn">🔏 ログイン</div></Link>
-            <Link href="/trade-journal"><div className="menuBtn">📊 トレード記録日誌</div></Link>
-            <Link href="/admin/fetch"><div className="menuBtn">📈 Price取得所</div></Link>
-            <Link href="/pivot_research"><div className="menuBtn">🧠 PIVOT研究所</div></Link>
+            <Link href="/upload"><div className="menuBtn">📤 Upload</div></Link>
+            <Link href="/event_logs"><div className="menuBtn">📊 EventLogs</div></Link>
+            <Link href="/screenshots"><div className="menuBtn">📊 Screenshots</div></Link>
+            <Link href="/login"><div className="menuBtn">🔏 Login</div></Link>
+            <Link href="/trade-journal"><div className="menuBtn">📊 trade日誌</div></Link>
+            <Link href="/admin/fetch"><div className="menuBtn">📈 Price取得</div></Link>
+            <Link href="/pivot_research"><div className="menuBtn">🧠 Pivot研究</div></Link>
           </div>
         </div>
       )}

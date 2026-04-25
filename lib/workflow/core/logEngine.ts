@@ -6,6 +6,7 @@ import { insertEventLog } from "../../workflow/log/event_logservice";
 import { updateBoardFromLog } from "./boardEngine";
 import { ActionType } from "@/lib/constants/LogOptions";
 import { LogSourceType } from "@/lib/constants/LogOptions";
+import { supabase } from "@/lib/infra/supabase"; // ←追加
 
 // -----------------------------------------
 // 🎛 モード管理
@@ -23,17 +24,14 @@ export const getMode = () => MODE;
 // ⏱ event_time生成（修正版）
 // -----------------------------------------
 const buildEventTime = (input?: string) => {
-  // 入力なし → 今
   if (!input) return new Date().toISOString();
 
-  // 🔥 YYYY-MM-DD だけ来た場合（←今回の本質）
   if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
     return `${input}T00:00:00`;
   }
 
   const d = new Date(input);
 
-  // 🔥 壊れ防止（最重要）
   if (isNaN(d.getTime())) {
     console.error("❌ invalid event_time:", input);
     return new Date().toISOString();
@@ -61,17 +59,11 @@ export const createLog = async (
   source: LogSourceType
 ) => {
   try {
-    // =====================================
-    // 🎛 MODE制御
-    // =====================================
     if (MODE === "auto" && source === "board_action") {
       console.log("⛔ manual操作は無効（AUTOモード）");
       return;
     }
 
-    // =====================================
-    // 🧹 正規化
-    // =====================================
     const pair = log.pair?.replace("/", "").toUpperCase();
     const timeframe_type = log.timeframe_type?.toUpperCase();
 
@@ -87,10 +79,42 @@ export const createLog = async (
       direction = null;
     }
 
-    // =====================================
-    // ⏱ event_time
-    // =====================================
     const event_time = buildEventTime(log.event_time);
+
+    // =====================================
+    // 🧠 前回ログ取得（追加）
+    // =====================================
+    const { data: prevLogs } = await supabase
+      .from("event_logs")
+      .select("*")
+      .eq("pair", pair)
+      .eq("timeframe_type", timeframe_type)
+      .eq("user_id", log.user_id) // ←重要
+      .order("event_time", { ascending: false })
+      .limit(1);
+
+    const prev = prevLogs?.[0];
+
+    // =====================================
+    // 🧠 変化判定（追加）
+    // =====================================
+    const isDirectionChanged =
+      direction !== undefined &&
+      direction !== prev?.direction;
+
+    const isPhaseChanged =
+      phase !== undefined &&
+      phase !== prev?.phase;
+
+    const isCritical = isDirectionChanged || isPhaseChanged;
+
+    // =====================================
+    // 🧠 group_id決定（追加）
+    // =====================================
+    const group_id =
+      isCritical || !prev?.group_id
+        ? crypto.randomUUID()
+        : prev.group_id;
 
     // =====================================
     // 🔥 payload
@@ -106,11 +130,10 @@ export const createLog = async (
       note: log.note ?? "",
       event_time,
       force_update: log.force_update ?? false,
+
+      group_id, // ←🔥これだけ追加
     };
 
-    // =====================================
-    // ❗ 最終防御
-    // =====================================
     if (!payload.timeframe_type) {
       console.error("❌ timeframe_type null", payload);
       return;
@@ -118,14 +141,8 @@ export const createLog = async (
 
     console.log("🔥 createLog:", payload);
 
-    // =====================================
-    // 📝 event_logs 保存
-    // =====================================
     await insertEventLog(payload);
 
-    // =====================================
-    // 🔄 board 更新
-    // =====================================
     await updateBoardFromLog(payload, source);
 
   } catch (e) {

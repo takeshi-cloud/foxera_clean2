@@ -97,6 +97,7 @@ export const ACTIONS = [
   "delete_board",
   "upload_screenshots",
   "log_update",
+  "update_note"
 ] as const;
 
 export type ActionType = typeof ACTIONS[number];

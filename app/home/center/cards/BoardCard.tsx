@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "@/lib/infra/supabase";
 import { ScreenshotUploadModal } from "@/components/screenshot/ScreenshotUploadModal";
+import { updateNoteCommand } from "@/lib/workflow/board/boardActions"
+import { NoteHistoryModal } from "@/components/note/NoteHistoryModal";
 
 export const BoardCard = ({
   item,
@@ -44,16 +47,39 @@ export const BoardCard = ({
       ? "S"
       : "-";
 
+  // =============================
+  // State
+  // =============================
   const [openUpload, setOpenUpload] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [noteValue, setNoteValue] = useState(item.note || "");
+  const [openHistory, setOpenHistory] = useState(false);
 
   // =============================
-  // Styles（全部ここに集約）
+  // Save
+  // =============================
+  const handleSaveNote = async () => {
+  // 変更なければ何もしない
+  if (noteValue === (item.note || "")) {
+    setEditing(false);
+    return;
+  }
+
+  console.log("🔥 SAVE NOTE", noteValue);
+
+  await updateNoteCommand(item, noteValue);
+
+  setEditing(false);
+};
+
+  // =============================
+  // Styles
   // =============================
   const styles = {
     card: {
       width: "100%",
       padding: "2px 5px",
-      marginTop: "2x",
+      marginTop: "2px", // ←修正
       borderRadius: "6px",
       background: "#020617",
       border: isActive
@@ -70,7 +96,7 @@ export const BoardCard = ({
 
     rowTop: {
       display: "flex",
-      alignItems: "center", // ←ズレ防止
+      alignItems: "center",
     },
 
     pair: {
@@ -152,12 +178,11 @@ export const BoardCard = ({
           ...(provided?.draggableProps?.style ?? {}),
         }}
       >
-        {/* ========= 上段 ========= */}
+        {/* 上段 */}
         <div style={styles.rowTop}>
           <div style={styles.pair}>{item.pair}</div>
 
           <div style={styles.rightGroup}>
-            {/* L/S */}
             <div
               onClick={(e) => {
                 e.stopPropagation();
@@ -171,7 +196,6 @@ export const BoardCard = ({
               {label}
             </div>
 
-            {/* × */}
             <div
               onClick={(e) => {
                 e.stopPropagation();
@@ -184,7 +208,7 @@ export const BoardCard = ({
           </div>
         </div>
 
-        {/* ========= 中段 ========= */}
+        {/* 中段 */}
         <div style={styles.rowMid}>
           {formatDate(item.event_time)}
 
@@ -204,21 +228,61 @@ export const BoardCard = ({
           </div>
         </div>
 
-        {/* ========= NOTE ========= */}
-        <div style={styles.noteRow}>
-          <span>📝</span>
-          <span style={styles.noteText}>
-            {item.note || ""}
-          </span>
-        </div>
-      </div>
+{/* NOTE（編集＋履歴） */}
+<div style={styles.noteRow}>
+  {/* 📝（履歴） */}
+  <span
+    style={{ flexShrink: 0, cursor: "pointer" }}
+    onClick={(e) => {
+      e.stopPropagation();
+      setOpenHistory(true);
+    }}
+  >
+    📝
+  </span>
 
-      {/* ========= Modal ========= */}
-      <ScreenshotUploadModal
-        open={openUpload}
-        onClose={() => setOpenUpload(false)}
-        symbol={item.pair}
-      />
+  {/* 入力 */}
+  <input
+    value={noteValue}
+    onChange={(e) => setNoteValue(e.target.value)}
+    onBlur={handleSaveNote}
+    onClick={(e) => e.stopPropagation()}
+    onMouseDown={(e) => e.stopPropagation()}
+    style={{
+      flex: 1,
+      minWidth: 0,
+
+      background: "transparent",
+      border: "none",
+      outline: "none",
+      color: "white",
+
+      fontSize: "14px",
+      width: "100%",
+
+      overflow: "hidden",
+      whiteSpace: "nowrap",
+      textOverflow: "ellipsis",
+    }}
+    placeholder="メモ..."
+  />
+</div>
+
+</div>
+
+{/* 📸アップロード */}
+<ScreenshotUploadModal
+  open={openUpload}
+  onClose={() => setOpenUpload(false)}
+  symbol={item.pair}
+/>
+
+{/* 📝履歴モーダル */}
+<NoteHistoryModal
+  open={openHistory}
+  onClose={() => setOpenHistory(false)}
+  item={item}
+/>
     </>
   );
 };

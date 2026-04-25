@@ -60,3 +60,26 @@ export const toggleDirectionCommand = async (item: any) => {
     "board_action" // 🔥追加
   );
 };
+
+// ================================================
+// 📝 メモ更新
+// ================================================
+export const updateNoteCommand = async (
+  item: any,
+  note: string
+) => {
+  console.log("🔥 updateNoteCommand", note); // ←デバッグ
+
+  await createLog(
+    {
+      user_id: item.user_id,
+      pair: item.pair,
+      timeframe_type: item.timeframe_type,
+      direction: item.direction,
+      phase: item.phase,
+      note,
+      action: "update_note",
+    },
+    "board_action"
+  );
+};
