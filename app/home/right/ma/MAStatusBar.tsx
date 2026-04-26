@@ -93,36 +93,54 @@ export const MAStatusBar = () => {
   }, []);
 
   return (
-    <div className="rounded border border-slate-700 bg-slate-900 p-3 text-sm text-white">
-      <div className="flex items-center justify-between">
-        <div>
-          MA更新: {updatedAt}
-        </div>
-
-        <button
-          onClick={
-            handleRefreshMA
-          }
-          disabled={
-            isCooling || loading
-          }
-          className={`rounded px-3 py-1 text-xs ${
-            isCooling || loading
-              ? "bg-slate-600 cursor-not-allowed"
-              : "bg-emerald-600"
-          }`}
-        >
-          {loading
-            ? "更新中..."
-            : "更新"}
-        </button>
+  <div
+    style={{
+      border: "1px solid #334155",
+      borderRadius: 6,
+      background: "#020617",
+      padding: "2px 10px",           // ←自由に調整できる
+      lineHeight:1.1,
+      fontSize: 12,
+      color: "#e2e8f0",          // ←文字色
+      fontFamily: "sans-serif",  // ←フォント
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        gap: 50,                // ←これが欲しかったやつ
+      }}
+    >
+      <div>
+        MA Structure  　更新日時: {updatedAt}
       </div>
 
-      <div className="mt-2">
-        <ApiCooldownBadge
-          cooldown={cooldown}
-        />
-      </div>
+      <button
+        onClick={handleRefreshMA}
+        disabled={isCooling || loading}
+        style={{
+          padding: "4px 10px",
+          fontSize: 12,
+          background:
+            isCooling || loading
+              ? "#e9ecf0b7"
+              : "#059669",
+          borderRadius: 4,
+          cursor:
+            isCooling || loading
+              ? "not-allowed"
+              : "pointer",
+        }}
+      >
+        {loading ? "更新中..." : "更新"}
+      </button>
     </div>
-  );
+
+    <div style={{ marginTop: -2 }}>
+      <ApiCooldownBadge cooldown={cooldown} />
+    </div>
+  </div>
+);
 };

@@ -9,7 +9,6 @@ import { ScreenshotPanel } from "../screenshot/ScreenshotPanel";
 
 export const RightPanel = ({
   activePair,
-
 }: {
   activePair: string;
 }) => {
@@ -25,54 +24,57 @@ export const RightPanel = ({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 10,
+          gap: 2,
           height: "100%",
           minHeight: 0,
         }}
       >
-        {/* 上段 */}
+        {/* =========================
+            🔴 上段（復活ポイント）
+        ========================= */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 10,
+            gridTemplateColumns: "55% 45%",
+            gap: 5,
             flexShrink: 0,
           }}
         >
-      
+          <PivotStatusBar />
+          <MAStatusBar />
         </div>
 
-        {/* 中段 */}
+        {/* =========================
+            🟡 中段
+        ========================= */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 10,
+            gridTemplateColumns: "55% 45%",
+            gap: 5,
             flex: "0 0 45%",
             minHeight: 500,
             overflow: "visible",
           }}
         >
-          <RadarPanel
-            activePair={activePair}
-          />
-
+          <RadarPanel activePair={activePair} />
           <MAStructurePanel activePair={activePair} />
         </div>
 
-        {/* 下段 */}
+        {/* =========================
+            🟢 下段
+        ========================= */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 10,
+            gridTemplateColumns: "50% 50%",
+            gap: 5,
             flex: 1,
             minHeight: 0,
             overflow: "hidden",
           }}
         >
           <ScreenshotPanel activePair={activePair} />
-
           <HomeChartPanel activePair={activePair} />
         </div>
       </div>

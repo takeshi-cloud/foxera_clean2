@@ -155,45 +155,60 @@ export default function ImageViewer({ src }: { src: string }) {
         ⤾
       </button>
 
-      <img
-        src={src}
-        onLoad={(e) => {
-          const img = e.currentTarget;
-          const container = img.parentElement;
-          if (!container) return;
+<img
+  src={src}
+  onLoad={(e) => {
+    const img = e.currentTarget;
+    const container = img.parentElement;
+    if (!container) return;
 
-          const cw = container.clientWidth;
-          const ch = container.clientHeight;
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
 
-          setImgSize({
-            w: img.naturalWidth,
-            h: img.naturalHeight,
-          });
+    const naturalW = img.naturalWidth;
+    const naturalH = img.naturalHeight;
 
-          const fit = Math.min(
-            cw / img.naturalWidth,
-            ch / img.naturalHeight
-          );
+    setImgSize({
+      w: naturalW,
+      h: naturalH,
+    });
 
-          setFitScale(fit);
-          setScale(fit);
+    // 🔥 cover（余白ゼロ）
+    const fit = Math.max(
+      cw / naturalW,
+      ch / naturalH
+    );
 
-          setPos({
-            x: (cw - img.naturalWidth * fit) / 2,
-            y: (ch - img.naturalHeight * fit) / 2,
-          });
-        }}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
-          transformOrigin: "top left",
-          pointerEvents: "none",
-          maxWidth: "none",
-          userSelect: "none",
-        }}
-      />
+    const imgW = naturalW * fit;
+    const imgH = naturalH * fit;
+
+    setFitScale(fit);
+    setScale(fit);
+
+    // 🔥 完全中央（cover対応）
+
+    const offsetY = 30; // ←好きなだけ（10〜30くらい）
+    setPos({
+      x: (cw - imgW) / 2,
+      y: (ch - imgH) / 2 + offsetY,
+    });
+  }}
+  style={{
+    position: "absolute",
+    top: 0,
+    left: 0,
+
+    transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
+    transformOrigin: "top left",
+
+    pointerEvents: "none",
+    userSelect: "none",
+
+    // 🔥 重要（これで制約外す）
+    maxWidth: "none",
+    maxHeight: "none",
+  }}
+/>
     </div>
   );
 }

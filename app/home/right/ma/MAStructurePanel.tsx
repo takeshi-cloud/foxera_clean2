@@ -41,42 +41,19 @@ export function MAStructurePanel({
       style={{
         border: "1px solid #334155",
         borderRadius: 8,
-        padding: 10,
+        padding: "5px 10px",
         background: "#0f172a",
         minHeight: 360,
         maxHeight: 800,
         overflowY: "auto",
       }}
     >
-      <div
-        style={{
-          fontWeight: "bold",
-          marginBottom: 4,
-          fontSize: 14,
-          color: "white",
-        }}
-      >
-        MA Structure
-      </div>
-
-      <div
-        style={{
-          fontSize: 12,
-          color: "#94a3b8",
-          marginBottom: 10,
-        }}
-      >
-        更新時刻：
-        {baseTime
-          ? new Date(baseTime).toLocaleString("ja-JP")
-          : "-"}
-      </div>
 
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 6,
+          gap: 3,
         }}
       >
         {rows.map((row) => (
