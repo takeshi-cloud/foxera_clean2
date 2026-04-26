@@ -125,6 +125,10 @@ if (!isForce && existing?.event_time) {
 
       image_url: log.image_url ?? existing?.image_url ?? null,
 
+      
+      group_id: log.group_id,
+      
+
       // 🔥 最重要
       event_time: log.event_time,
 

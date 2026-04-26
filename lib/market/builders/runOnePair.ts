@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/infra/supabase";
-import { getOrCreatePivot } from "@/lib/market/builders/pivoBuilder";
+import { getPivot } from "@/lib/market/ingest/getPivot";
 import { getOrFetchPrice } from "../ingest/getOrFetchPrice";
 import { calcRadar } from "../indicators/pivotRadar";
 import { saveRadar } from "../../pivot_radar/storage/pivotRadarService";
@@ -79,12 +79,12 @@ export const runOnePair = async (MARKET: string) => {
     // =========================================
     // PIVOT
     // =========================================
-    log("CALL getOrCreatePivot");
+    log("CALL getPivot");
 
     let pivot: any = null;
 
     try {
-      const pivotResult = await getOrCreatePivot(MARKET);
+      const pivotResult = await getPivot(MARKET);
 
       if ((pivotResult as any)?.trace?.flow) {
         trace.flow.push(...(pivotResult as any).trace.flow);

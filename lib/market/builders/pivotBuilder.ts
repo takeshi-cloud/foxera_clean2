@@ -5,69 +5,37 @@ import {
   upsertPivotDaily,
   upsertPivotWeekly,
 } from "../../../lib/pivot/pivotSave";
-import { getBaseTime } from "../utils/getBaseTime";
 
-export const getOrCreatePivot = async (symbol: string) => {
+// helper（そのままコピー）
+const mapPivot = (p: any) => ({
+  PP: p.pivot,
+  R1: p.r1,
+  R2: p.r2,
+  R3: p.r3,
+  S1: p.s1,
+  S2: p.s2,
+  S3: p.s3,
+});
+
+export const pivotBuilder = async (
+  symbol: string,
+  ctx: any
+) => {
   const log = (step: string, data?: any) => {
     console.log(`[pivotBuilder] ${step}`, data ?? "");
   };
 
-  log("START", { symbol });
-
-  const dailyBase = getBaseTime("daily");
-  const weeklyBase = getBaseTime("weekly");
-
-  const dailyStr = dailyBase.end.toISOString().slice(0, 10);
-  const weeklyStr = weeklyBase.start.toISOString().slice(0, 10);
-
-  // =========================================
-  // DB取得
-  // =========================================
-  const { data: daily } = await supabase
-    .from("pivot_levels")
-    .select("*")
-    .eq("symbol", symbol)
-    .eq("timeframe", "daily")
-    .eq("source_daily_date", dailyStr)
-    .maybeSingle();
-
-  const { data: weekly } = await supabase
-    .from("pivot_levels")
-    .select("*")
-    .eq("symbol", symbol)
-    .eq("timeframe", "weekly")
-    .eq("source_week_start", weeklyStr)
-    .maybeSingle();
-
-  log("DB", { daily: !!daily, weekly: !!weekly });
+  const {
+    daily,
+    weekly,
+    dailyStr,
+    weeklyStr,
+    dailyBase,
+    weeklyBase,
+  } = ctx;
 
   // =========================================
-  // 完全キャッシュ
-  // =========================================
-  if (daily && weekly) {
-    log("CACHE HIT");
-    return {
-      daily: mapPivot(daily),
-      weekly: mapPivot(weekly),
-
-      // 🔥 debug追加（安全）
-      debug: {
-        source: "cache",
-        bars: null,
-        raw: {
-          daily,
-          weekly,
-        },
-        baseTime: {
-          daily: dailyBase,
-          weekly: weeklyBase,
-        },
-      },
-    };
-  }
-
-  // =========================================
-  // NY足生成
+  // NY足生成（完全依存）
   // =========================================
   log("NY BUILDER CALL");
 
@@ -79,8 +47,24 @@ export const getOrCreatePivot = async (symbol: string) => {
     log("NY BUILDER ERROR", e.message);
   }
 
-  const hasDailyBars = !!bars?.prevDaily;
-  const hasWeeklyBars = !!bars?.prevWeekly;
+  // 🔥 安全ガード（ここそのまま）
+  if (!bars) {
+    log("NY BUILDER EMPTY");
+
+    return {
+      daily: null,
+      weekly: null,
+      debug: {
+        source: "no-bars",
+        bars: null,
+        raw: null,
+        baseTime: { daily: dailyBase, weekly: weeklyBase },
+      },
+    };
+  }
+
+  const hasDailyBars = !!bars.prevDaily;
+  const hasWeeklyBars = !!bars.prevWeekly;
 
   log("NY RESULT", {
     daily: hasDailyBars,
@@ -183,7 +167,7 @@ export const getOrCreatePivot = async (symbol: string) => {
   }
 
   // =========================================
-  // 最終判定
+  // 最終判定（そのまま）
   // =========================================
   if (!d && !w) {
     log("FINAL FAIL (no pivot)");
@@ -196,22 +180,11 @@ export const getOrCreatePivot = async (symbol: string) => {
     daily: d ? mapPivot(d) : null,
     weekly: w ? mapPivot(w) : null,
 
-    // 🔥 debug追加（ここが本命）
     debug: {
       source: "build",
-
-      bars: bars ?? null,
-
-      raw: {
-        daily: d ?? null,
-        weekly: w ?? null,
-      },
-
-      baseTime: {
-        daily: dailyBase,
-        weekly: weeklyBase,
-      },
-
+      bars: bars,
+      raw: { daily: d ?? null, weekly: w ?? null },
+      baseTime: { daily: dailyBase, weekly: weeklyBase },
       flags: {
         hasDailyBars,
         hasWeeklyBars,
@@ -219,16 +192,3 @@ export const getOrCreatePivot = async (symbol: string) => {
     },
   };
 };
-
-// =========================================
-// helper
-// =========================================
-const mapPivot = (p: any) => ({
-  PP: p.pivot,
-  R1: p.r1,
-  R2: p.r2,
-  R3: p.r3,
-  S1: p.s1,
-  S2: p.s2,
-  S3: p.s3,
-});

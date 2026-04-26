@@ -129,6 +129,7 @@ export default function HomeClient() {
           minHeight: "100vh",
           background: "#020617",
           overflowX: "auto",
+          overflowY: "auto",
         }}
       >
         {/* LEFT */}

@@ -2,7 +2,7 @@
 
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { BoardCard } from "../cards/BoardCard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "./Header";
 import { Row } from "./Row";
 
@@ -47,18 +47,29 @@ export const CenterPanel = ({
   onUpdateTF,
 }: any) => {
 
+  // =============================
+  // 🔥 追加：スマホ判定（これだけ）
+  // =============================
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   console.log("boards raw:", boards);
 
-  // 🔥 Wait除外
   const phases = PHASES.slice(1);
 
-  // 🔥 HTF / LTF分類
   const longBoards = boards.filter(
     (b: Board) =>
       b.timeframe_type === TIMEFRAME_TYPES[0] ||
       b.timeframe_type === "HTF" ||
       b.timeframe_type === "long"
-  );  
+  );
+
   const shortBoards = boards.filter(
     (b: Board) =>
       b.timeframe_type === TIMEFRAME_TYPES[2] ||
@@ -67,23 +78,14 @@ export const CenterPanel = ({
   );
 
   const getPhaseBg = (phase: string) => {
-  if (phase === "Trigger") return "#eab308";   // 薄い黄色
-  if (phase === "Pullback") return "#06b6d4"; // 薄い水色
-  return "#0f172a"; // デフォルト
-};
+    if (phase === "Trigger") return "#eab308";
+    if (phase === "Pullback") return "#06b6d4";
+    return "#0f172a";
+  };
 
-
-
-
-  
-
-  // =============================
-  // 🔥 UI状態
-  // =============================
   const [showLong, setShowLong] = useState(true);
   const [showShort, setShowShort] = useState(true);
 
-  // 👉 フィルタ適用（ここで一回だけ）
   const filteredLongBoards = filterByDirection(longBoards, showLong, showShort);
   const filteredShortBoards = filterByDirection(shortBoards, showLong, showShort);
 
@@ -96,14 +98,27 @@ export const CenterPanel = ({
     return p(a.phase) - p(b.phase);
   };
 
+  // =============================
+  // 🔥 ここだけ調整値
+  // =============================
+  const PADDING = isMobile ? "4px" : "12px";
+  const GAP = isMobile ? "4px" : "12px";
+  const SECTION_GAP = isMobile ? "6px" : "12px";
+
   return (
-    <div style={{ flex: 1, padding: "12px", color: "white" }}>
+    <div style={{ flex: 1, padding: PADDING, color: "white" }}>
 
       {/* ================= 現在の状況 ================= */}
 
       <h3>現在の状況</h3>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: GAP,
+        }}
+      >
         <div>
           <Header />
           {[...filteredLongBoards]
@@ -143,7 +158,7 @@ export const CenterPanel = ({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "12px",
+          gap: GAP,
           marginTop: "16px",
           marginBottom: "10px",
         }}
@@ -154,18 +169,17 @@ export const CenterPanel = ({
           FILTER
         </span>
 
-        <div style={{ display: "flex", gap: "6px" }}>
+        <div style={{ display: "flex", gap: isMobile ? "4px" : "6px" }}>
           <button
             onClick={() => setShowLong(!showLong)}
             style={{
               background: showLong ? "#22c55e" : "#1e293b",
               color: showLong ? "white" : "#64748b",
-              padding: "4px 10px",
+              padding: isMobile ? "3px 6px" : "4px 10px",
               borderRadius: "6px",
               border: "none",
               cursor: "pointer",
               fontSize: "12px",
-              boxShadow: showLong ? "0 0 8px #22c55e88" : "none",
             }}
           >
             LONG
@@ -176,12 +190,11 @@ export const CenterPanel = ({
             style={{
               background: showShort ? "#ef4444" : "#1e293b",
               color: showShort ? "white" : "#64748b",
-              padding: "4px 10px",
+              padding: isMobile ? "3px 6px" : "4px 10px",
               borderRadius: "6px",
               border: "none",
               cursor: "pointer",
               fontSize: "12px",
-              boxShadow: showShort ? "0 0 8px #ef444488" : "none",
             }}
           >
             SHORT
@@ -189,12 +202,9 @@ export const CenterPanel = ({
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: "12px" }}>
+      <div style={{ display: "flex", gap: GAP }}>
         {phases.map((phase) => {
-
           const items = filteredLongBoards.filter((b) => b.phase === phase);
-
-
 
           return (
             <Droppable key={phase} droppableId={`long-${phase}`}>
@@ -207,11 +217,11 @@ export const CenterPanel = ({
                     minHeight: 120,
                     background: getPhaseBg(phase),
                     borderRadius: 8,
-                    padding: 8,
+                    padding: isMobile ? 4 : 8,
                     border: "1px solid #334155",
                   }}
                 >
-                  <h4>{phase}</h4>
+                  <h4 style={{ marginBottom: isMobile ? 4 : 8 }}>{phase}</h4>
 
                   {items.map((item, index) => (
                     <Draggable key={item.id} draggableId={item.id.toString()} index={index}>
@@ -245,9 +255,8 @@ export const CenterPanel = ({
 
       <h3 style={{ marginTop: 16 }}>②LTF</h3>
 
-      <div style={{ display: "flex", gap: "12px" }}>
+      <div style={{ display: "flex", gap: GAP }}>
         {phases.map((phase) => {
-
           const items = filteredShortBoards.filter((b) => b.phase === phase);
 
           return (
@@ -261,11 +270,11 @@ export const CenterPanel = ({
                     minHeight: 120,
                     background: getPhaseBg(phase),
                     borderRadius: 8,
-                    padding: 8,
+                    padding: isMobile ? 4 : 8,
                     border: "1px solid #334155",
                   }}
                 >
-                  <h4>{phase}</h4>
+                  <h4 style={{ marginBottom: isMobile ? 4 : 8 }}>{phase}</h4>
 
                   {items.map((item, index) => (
                     <Draggable key={item.id} draggableId={item.id.toString()} index={index}>

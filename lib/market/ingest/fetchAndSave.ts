@@ -91,6 +91,9 @@ export async function fetchAndSave(
       from: start,
       to: end,
     });
+console.log("🔥 FETCH COUNT:", data?.length);
+console.log("🔥 FETCH LAST:", data?.[data.length - 1]);
+
   } catch (e) {
     console.error("❌ fetchOHLC failed:", e);
     return;
@@ -146,7 +149,8 @@ export async function fetchAndSave(
     console.warn("❌ no valid rows after format");
     return;
   }
-
+console.log("💾 SAVE COUNT:", formatted.length);
+console.log("💾 SAVE LAST:", formatted[formatted.length - 1]);
   // =========================================
   // ⑦ 保存
   // =========================================

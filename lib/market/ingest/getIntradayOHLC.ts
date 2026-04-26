@@ -34,56 +34,65 @@ export const getIntradayOHLC = async (
 
   const latest = data?.[data.length - 1];
 
-  if (latest) {
-    console.log("🧭 latest DB:", latest.timestamp_utc);
-  }
-
   // =========================================
-  // 🔥 ② 強制fetch（←これが重要）
+  // 🔥 ② 必要なときだけfetch
   // =========================================
-  console.log("🔥 FORCE FETCH 1h");
 
-  await fetchAndSave(
-    symbol,
-    "1h",
-    fromISO.slice(0, 10),
-    toISO.slice(0, 10)
-  );
+  let needFetch = false;
 
-  console.log("⏳ waiting DB reflect...");
+  if (!data?.length) {
+    console.log("⚠️ NO DATA → fetch");
+    needFetch = true;
+  } else if (latest) {
+    const latestTime = new Date(latest.timestamp_utc);
+    const diff = to.getTime() - latestTime.getTime();
 
-  // =========================================
-  // 🔥 ③ DB再取得（確実に取る）
-  // =========================================
-  let retry = 0;
-
-  while (retry < 5) {
-    const res = await supabase
-      .from("ohlc_1h")
-      .select("*")
-      .eq("symbol", dbSymbol)
-      .gte("timestamp_utc", fromISO)
-      .lte("timestamp_utc", toISO)
-      .order("timestamp_utc", { ascending: true });
-
-    console.log(`🔁 retry ${retry}:`, res.data?.length || 0);
-
-    if (res.data?.length) {
-      console.log("✅ fetch success:", {
-        symbol,
-        count: res.data.length,
-      });
-
-      data = res.data;
-      break;
+    // 👉 1時間以上ズレてたらfetch
+    if (diff > 60 * 60 * 1000) {
+      console.log("⚠️ DATA OLD → fetch");
+      needFetch = true;
     }
+  }
 
-    await new Promise((r) => setTimeout(r, 500));
-    retry++;
+  if (needFetch) {
+    console.log("🔥 CONDITIONAL FETCH");
+
+    await fetchAndSave(
+      symbol,
+      "1h",
+      fromISO.slice(0, 10),
+      toISO.slice(0, 10)
+    );
+
+    console.log("⏳ waiting DB reflect...");
+
+    let retry = 0;
+
+    while (retry < 5) {
+      const res = await supabase
+        .from("ohlc_1h")
+        .select("*")
+        .eq("symbol", dbSymbol)
+        .gte("timestamp_utc", fromISO)
+        .lte("timestamp_utc", toISO)
+        .order("timestamp_utc", { ascending: true });
+
+      console.log(`🔁 retry ${retry}:`, res.data?.length || 0);
+
+      if (res.data?.length) {
+        data = res.data;
+        break;
+      }
+
+      await new Promise((r) => setTimeout(r, 500));
+      retry++;
+    }
+  } else {
+    console.log("✅ FETCH SKIPPED");
   }
 
   // =========================================
-  // ④ fallback
+  // ③ fallback
   // =========================================
   if (!data?.length) {
     console.warn("⚠️ fallback: get latest 50 bars");
@@ -95,13 +104,10 @@ export const getIntradayOHLC = async (
       .order("timestamp_utc", { ascending: false })
       .limit(50);
 
-    console.log("📦 fallback rows:", res.data?.length || 0);
-
     if (res.data?.length) {
       return res.data.reverse();
     }
 
-    console.error("❌ No intraday data:", symbol);
     throw new Error("No intraday data");
   }
 

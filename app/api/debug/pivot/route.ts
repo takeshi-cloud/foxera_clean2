@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
-import { getOrCreatePivot } from "@/lib/market/builders/pivoBuilder";
+
+import { getPivot } from "@/lib/market/ingest/getPivot";
 import { nyBarsBuilder } from "@/lib/market/builders/nyBarsBuilder";
 import { getIntradayOHLC } from "@/lib/market/ingest/getIntradayOHLC";
 import { getBaseTime } from "@/lib/market/utils/getBaseTime";
@@ -22,11 +23,13 @@ export async function GET(req: Request) {
   console.log("🚀 DEBUG START:", MARKET, step);
 
   // =========================================
-  // BASE TIME
+  // ① BASE TIME
   // =========================================
+  let daily: any, weekly: any;
+
   try {
-    const daily = getBaseTime("daily");
-    const weekly = getBaseTime("weekly");
+    daily = getBaseTime("daily");
+    weekly = getBaseTime("weekly");
 
     debug.baseTime = {
       daily: {
@@ -46,20 +49,40 @@ export async function GET(req: Request) {
   }
 
   // =========================================
-  // STEP 1: Intraday
+  // ② FETCH RANGE
   // =========================================
-  if (step === "intraday" || step === "all") {
-    try {
-      const from = new Date("2024-01-01");
-      const now = new Date();
+  let fetchFrom: Date | null = null;
+  let fetchTo: Date | null = null;
 
-      const intraday = await getIntradayOHLC(MARKET, from, now);
+  if (daily && weekly) {
+    fetchFrom = new Date(weekly.start);
+    fetchFrom.setUTCDate(fetchFrom.getUTCDate() - 5);
+
+    fetchTo = daily.end;
+
+    debug.steps.fetchRange = {
+      from: fetchFrom.toISOString(),
+      to: fetchTo.toISOString(),
+    };
+  }
+
+  // =========================================
+  // ③ INTRADAY
+  // =========================================
+  let intraday: any[] = [];
+
+  if (
+    (step === "intraday" || step === "all" || step === "flow") &&
+    fetchFrom &&
+    fetchTo
+  ) {
+    try {
+      intraday = await getIntradayOHLC(MARKET, fetchFrom, fetchTo);
 
       debug.steps.intraday = {
-        from: from.toISOString(),
-        to: now.toISOString(),
-        count: intraday?.length || 0,
-        first: intraday?.[0] || null,
+        count: intraday.length,
+        first: intraday[0] || null,
+        last: intraday[intraday.length - 1] || null,
       };
     } catch (e: any) {
       debug.errors.push({
@@ -67,7 +90,12 @@ export async function GET(req: Request) {
         error: e?.message || String(e),
       });
     }
+  }
 
+  // =========================================
+  // DB確認
+  // =========================================
+  if (step === "intraday" || step === "all") {
     try {
       const { data } = await supabase
         .from("ohlc_1h")
@@ -83,39 +111,40 @@ export async function GET(req: Request) {
         error: e?.message || String(e),
       });
     }
+  }
 
+  // =========================================
+  // 🔥 API RAW CHECK（←ここが今回の本命）
+  // =========================================
+  if (step === "api" || step === "all") {
     try {
-      const fromISO = new Date("2024-01-01").toISOString();
-      const toISO = new Date().toISOString();
+      const { fetchOHLC } = await import(
+        "@/lib/market/ingest/fetchMarketData"
+      );
 
-      const { data } = await supabase
-        .from("ohlc_1h")
-        .select("*")
-        .eq("symbol", MARKET)
-        .gte("timestamp_utc", fromISO)
-        .lte("timestamp_utc", toISO)
-        .limit(5);
+      const raw = await fetchOHLC(MARKET, "1h", {
+        outputsize: 5,
+      });
 
-      debug.steps.db_range_test = {
-        from: fromISO,
-        to: toISO,
-        count: data?.length || 0,
-        sample: data?.[0] || null,
-      };
+      debug.steps.api_raw = raw?.[0] || null;
+
     } catch (e: any) {
       debug.errors.push({
-        step: "db_range_test",
+        step: "api_raw",
         error: e?.message || String(e),
       });
     }
   }
 
   // =========================================
-  // STEP 2: NY Bars
+  // ④ NY BARS
   // =========================================
-  if (step === "ny" || step === "all") {
+  let ny: any = null;
+
+  if (step === "ny" || step === "all" || step === "flow") {
     try {
-      const ny = await nyBarsBuilder(MARKET);
+      ny = await nyBarsBuilder(MARKET);
+
       debug.steps.nyBars = ny;
     } catch (e: any) {
       debug.errors.push({
@@ -126,11 +155,14 @@ export async function GET(req: Request) {
   }
 
   // =========================================
-  // STEP 3: Pivot
+  // ⑤ PIVOT
   // =========================================
-  if (step === "pivot" || step === "all") {
+  let pivot: any = null;
+
+  if (step === "pivot" || step === "all" || step === "flow") {
     try {
-      const pivot = await getOrCreatePivot(MARKET);
+      pivot = await getPivot(MARKET);
+
       debug.steps.pivot = pivot;
     } catch (e: any) {
       debug.errors.push({
@@ -141,26 +173,20 @@ export async function GET(req: Request) {
   }
 
   // =========================================
-  // STEP 4: fetchOHLC（最重要）
+  // ⑥ FLOW
   // =========================================
-  if (step === "ohlc" || step === "all") {
+  if (step === "flow" || step === "all") {
     try {
-      const { fetchOHLC } = await import(
-        "@/lib/market/ingest/fetchMarketData"
-      );
-
-      const result = await fetchOHLC("USD/JPY", "5m", {
-        outputsize: 5,
-      });
-
-      debug.steps.fetchOHLC = {
-        input: "USD/JPY",
-        count: result?.length || 0,
-        first: result?.[0] || null,
+      debug.steps.flow = {
+        baseTime: debug.baseTime,
+        fetchRange: debug.steps.fetchRange,
+        intraday: debug.steps.intraday,
+        nyBars: ny,
+        pivot: pivot,
       };
     } catch (e: any) {
       debug.errors.push({
-        step: "fetchOHLC",
+        step: "flow",
         error: e?.message || String(e),
       });
     }

@@ -19,10 +19,7 @@ export async function fetchOHLC(
     throw new Error("❌ symbol undefined in fetchOHLC");
   }
 
-  // 🔥 修正（統一）
   const apiSymbol = symbol;
-
-  console.log("🔥 API symbol:", apiSymbol);
 
   const intervalMap: Record<string, string> = {
     "5m": "5min",
@@ -35,24 +32,30 @@ export async function fetchOHLC(
 
   const apiInterval = intervalMap[interval] || interval;
 
-  console.log("🔥 API interval:", apiInterval);
-
   const url = new URL("https://api.twelvedata.com/time_series");
 
   url.searchParams.append("symbol", apiSymbol);
   url.searchParams.append("interval", apiInterval);
-  url.searchParams.append("outputsize", String(outputsize));
+
+  // 🔥 範囲指定がある場合はoutputsizeを使わない
+  if (!from && !to) {
+    url.searchParams.append("outputsize", String(outputsize));
+  }
+
   url.searchParams.append(
     "apikey",
     process.env.NEXT_PUBLIC_TWELVEDATA_KEY!
   );
 
+  // 🔥 ここが修正ポイント（超重要）
   if (from) {
-    url.searchParams.append("start_date", `${from} 00:00:00`);
+    const start = `${from}T00:00:00`;
+    url.searchParams.append("start_date", start);
   }
 
   if (to) {
-    url.searchParams.append("end_date", `${to} 23:59:59`);
+    const end = `${to}T23:59:59`;
+    url.searchParams.append("end_date", end);
   }
 
   console.log("🌐 FETCH URL:", url.toString());
@@ -69,7 +72,8 @@ export async function fetchOHLC(
 
   const data = await res.json();
 
-  console.log("🔥 raw response:", data);
+  console.log("🔥 RAW datetime sample:", data?.values?.[0]?.datetime);
+  console.log("🔥 RAW full sample:", data?.values?.[0]);
 
   if (data.status === "error") {
     console.error("❌ TwelveData Error:", data);
@@ -88,8 +92,19 @@ export async function fetchOHLC(
 
   console.log("✅ values count:", data.values.length);
 
-  return data.values.map((d: any) => {
-    const utc = new Date(d.datetime);
+  return data.values.map((d: any, i: number) => {
+    if (i < 10) {
+      console.log("CHECK", {
+        datetime: d.datetime,
+        open: d.open,
+        high: d.high,
+        low: d.low,
+        close: d.close,
+      });
+    }
+
+    // 🔥 UTCとして固定解釈
+    const utc = new Date(d.datetime + "Z");
 
     return {
       symbol,

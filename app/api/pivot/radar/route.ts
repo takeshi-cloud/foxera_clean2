@@ -36,90 +36,104 @@ export async function GET(req: Request) {
 
     const results: any[] = [];
 
-    for (const m of targets) {
-      const cache = cacheMap.get(m.api);
+    // =========================================
+    // 🔥 ここから変更（3並列）
+    // =========================================
 
-      let skip = false;
+    const BATCH_SIZE = 3;
 
-      if (!force && cache?.price_timestamp) {
-        const diffMin =
-          (Date.now() -
-            new Date(cache.price_timestamp).getTime()) /
-          60000;
+    for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+      const batch = targets.slice(i, i + BATCH_SIZE);
 
-        if (diffMin < 5) {
-          skip = true;
-        }
-      }
+      const batchResults = await Promise.all(
+        batch.map(async (m) => {
+          const cache = cacheMap.get(m.api);
 
-      // =====================================
-      // CACHE
-      // =====================================
-      if (skip) {
-        log("SKIP CACHE", m.api);
+          let skip = false;
 
-        const { data: latest } = await supabase
-          .from("pivot_radar_history")
-          .select("*")
-          .eq("symbol", m.api)
-          .order("timestamp", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          if (!force && cache?.price_timestamp) {
+            const diffMin =
+              (Date.now() -
+                new Date(cache.price_timestamp).getTime()) /
+              60000;
 
-        results.push({
-          label: m.label,
-          symbol: m.api,
-          key: m.key,
-          step: "cache",
+            if (diffMin < 15) {
+              skip = true;
+            }
+          }
 
-          // 🔥 UI構造に合わせる
-          summary: latest
-            ? {
-                price: {
-                  value: latest.price,
-                  time: latest.price_timestamp,
-                },
+          // =====================================
+          // CACHE
+          // =====================================
+          if (skip) {
+            log("SKIP CACHE", m.api);
 
-                radar: {
-                  x: latest.x,
-                  y: latest.y,
-                  time: latest.timestamp,
-                },
+            const { data: latest } = await supabase
+              .from("pivot_radar_history")
+              .select("*")
+              .eq("symbol", m.api)
+              .order("timestamp", { ascending: false })
+              .limit(1)
+              .maybeSingle();
 
-                // ❗DBに無いので一旦null
-                pivot: null,
-                ohlc: null,
-              }
-            : null,
+            return {
+              label: m.label,
+              symbol: m.api,
+              key: m.key,
+              step: "cache",
 
-          error: null,
-        });
+              summary: latest
+                ? {
+                    price: {
+                      value: latest.price,
+                      time: latest.price_timestamp,
+                    },
 
-        continue;
-      }
+                    radar: {
+                      x: latest.x,
+                      y: latest.y,
+                      time: latest.timestamp,
+                    },
 
-      // =====================================
-      // RUN
-      // =====================================
-      log("RUN", m.api);
+                    pivot: null,
+                    ohlc: null,
+                  }
+                : null,
 
-      const result = await runOnePair(m.api);
+              error: null,
+            };
+          }
 
-      log("DONE", {
-        market: m.api,
-        step: result?.step,
-      });
+          // =====================================
+          // RUN
+          // =====================================
+          log("RUN", m.api);
 
-      results.push({
-        label: m.label,
-        symbol: m.api,
-        key: m.key,
-        step: result?.step,
-        summary: result?.summary,
-        trace: result?.trace,
-        error: result?.error || null,
-      });
+          const result = await runOnePair(m.api);
+
+          log("DONE", {
+            market: m.api,
+            step: result?.step,
+          });
+
+          return {
+            label: m.label,
+            symbol: m.api,
+            key: m.key,
+            step: result?.step,
+            summary: result?.summary,
+            trace: result?.trace,
+            error: result?.error || null,
+          };
+        })
+      );
+
+      results.push(...batchResults);
     }
+
+    // =========================================
+    // 🔥 ここまで変更
+    // =========================================
 
     log("END");
 

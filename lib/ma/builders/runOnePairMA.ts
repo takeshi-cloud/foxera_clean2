@@ -1,5 +1,5 @@
-import { buildMAStructure } from "./builders/buildMAStructure";
-import { saveMAStructure } from "./storage/saveMAStructure";
+import { buildMAStructure } from "./buildMAStructure";
+import { saveMAStructure } from "../storage/saveMAStructure";
 
 // =========================================
 // MA単体実行（検証用）

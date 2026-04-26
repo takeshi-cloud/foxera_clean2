@@ -1,6 +1,5 @@
 import { getIntradayOHLC } from "../ingest/getIntradayOHLC";
 import { getBaseTime } from "../utils/getBaseTime";
-import { buildOHLCFromRange } from "../../market/transform/buildOHLCFromRange";
 
 export const nyBarsBuilder = async (pair: string) => {
   const log = (step: string, data?: any) => {
@@ -8,13 +7,11 @@ export const nyBarsBuilder = async (pair: string) => {
   };
 
   try {
-    log("START nyBarsBuilder", { pair });
-
     const dailyRange = getBaseTime("daily");
     const weeklyRange = getBaseTime("weekly");
 
     const fetchFrom = new Date(weeklyRange.start);
-    fetchFrom.setUTCDate(fetchFrom.getUTCDate() - 5); // ← 余裕増やす
+    fetchFrom.setUTCDate(fetchFrom.getUTCDate() - 2);
 
     const fetchTo = dailyRange.end;
 
@@ -24,60 +21,32 @@ export const nyBarsBuilder = async (pair: string) => {
     });
 
     const intraday = await getIntradayOHLC(pair, fetchFrom, fetchTo);
+    log("INTRADAY RANGE", {
+  start: intraday[0]?.timestamp_utc,
+  end: intraday[intraday.length - 1]?.timestamp_utc,
+  count: intraday.length,
+});
 
-    log("INTRADAY COUNT", intraday?.length);
-
-    if (!intraday || intraday.length === 0) {
-      log("❌ intraday empty");
-
-      return {
-        prevDaily: null,
-        prevWeekly: null,
-
-        // 🔥 debug追加（重要）
-        debug: {
-          range: {
-            fetchFrom: fetchFrom.toISOString(),
-            fetchTo: fetchTo.toISOString(),
-
-            dailyStart: dailyRange.start.toISOString(),
-            dailyEnd: dailyRange.end.toISOString(),
-
-            weeklyStart: weeklyRange.start.toISOString(),
-            weeklyEnd: weeklyRange.end.toISOString(),
-          },
-          counts: {
-            intraday: 0,
-            daily: 0,
-            weekly: 0,
-          },
-        },
-      };
+    if (!intraday?.length) {
+      return { h4: null, prevDaily: null, prevWeekly: null };
     }
 
     // =========================
-    // FILTER（ここが重要）
+    // FILTER（NY日足・週足）
     // =========================
 
-    const dailyData = intraday.filter(
-      (d) =>
-        new Date(d.timestamp_utc) >= dailyRange.start &&
-        new Date(d.timestamp_utc) <= dailyRange.end
-    );
+    const dailyData = intraday.filter((d) => {
+      const t = new Date(d.timestamp_utc);
+      return t >= dailyRange.start && t < dailyRange.end;
+    });
 
-    const weeklyData = intraday.filter(
-      (d) =>
-        new Date(d.timestamp_utc) >= weeklyRange.start &&
-        new Date(d.timestamp_utc) <= weeklyRange.end
-    );
-
-    log("FILTER RESULT", {
-      dailyCount: dailyData.length,
-      weeklyCount: weeklyData.length,
+    const weeklyData = intraday.filter((d) => {
+      const t = new Date(d.timestamp_utc);
+      return t >= weeklyRange.start && t < weeklyRange.end;
     });
 
     // =========================
-    // BUILD（緩和）
+    // BUILD共通
     // =========================
 
     const build = (data: any[]) => {
@@ -92,34 +61,93 @@ export const nyBarsBuilder = async (pair: string) => {
     };
 
     const prevDaily = build(dailyData);
+    log("DAILY DATA RANGE", {
+  start: dailyData[0]?.timestamp_utc,
+  end: dailyData[dailyData.length - 1]?.timestamp_utc,
+  count: dailyData.length,
+  high: prevDaily?.high,
+  low: prevDaily?.low,
+});
     const prevWeekly = build(weeklyData);
-
-    log("BUILD RESULT", {
-      hasDaily: !!prevDaily,
-      hasWeekly: !!prevWeekly,
-    });
+    log("WEEKLY DATA RANGE", {
+  start: weeklyData[0]?.timestamp_utc,
+  end: weeklyData[weeklyData.length - 1]?.timestamp_utc,
+  count: weeklyData.length,
+});
 
     // =========================
-    // 最終
+    // 🔥 NY基準 4H生成（DST対応版）
     // =========================
 
-    const result = {
-      prevDaily: prevDaily ?? null,
-      prevWeekly: prevWeekly ?? null,
+    const build4H = (data: any[]) => {
+      if (!data.length) return [];
 
-      // 🔥 debug追加（ここが今回の本命）
+      const result: any[] = [];
+
+      const base = dailyRange.start.getTime(); // ← NY開始（DST込み）
+
+      let current: any[] = [];
+      let currentBlock: number | null = null;
+
+      for (const d of data) {
+        const t = new Date(d.timestamp_utc).getTime();
+
+        const block = Math.floor(
+          (t - base) / (4 * 60 * 60 * 1000)
+        );
+
+        if (currentBlock === null) {
+          currentBlock = block;
+        }
+
+        if (block !== currentBlock) {
+          if (current.length) {
+            result.push({
+              open: current[0].open,
+              high: Math.max(...current.map((x) => x.high)),
+              low: Math.min(...current.map((x) => x.low)),
+              close: current[current.length - 1].close,
+              start: current[0].timestamp_utc,
+              end: current[current.length - 1].timestamp_utc,
+            });
+          }
+
+          current = [];
+          currentBlock = block;
+        }
+
+        current.push(d);
+      }
+
+      if (current.length) {
+        result.push({
+          open: current[0].open,
+          high: Math.max(...current.map((x) => x.high)),
+          low: Math.min(...current.map((x) => x.low)),
+          close: current[current.length - 1].close,
+          start: current[0].timestamp_utc,
+          end: current[current.length - 1].timestamp_utc,
+        });
+      }
+
+      return result;
+    };
+
+    const h4 = build4H(intraday);
+    log("H4 SAMPLE", h4?.[0]);
+
+    return {
+      h4,
+      prevDaily,
+      prevWeekly,
+
       debug: {
         range: {
-          fetchFrom: fetchFrom.toISOString(),
-          fetchTo: fetchTo.toISOString(),
-
-          dailyStart: dailyRange.start.toISOString(),
-          dailyEnd: dailyRange.end.toISOString(),
-
-          weeklyStart: weeklyRange.start.toISOString(),
-          weeklyEnd: weeklyRange.end.toISOString(),
+          dailyStart: dailyRange.start,
+          dailyEnd: dailyRange.end,
+          weeklyStart: weeklyRange.start,
+          weeklyEnd: weeklyRange.end,
         },
-
         counts: {
           intraday: intraday.length,
           daily: dailyData.length,
@@ -128,29 +156,13 @@ export const nyBarsBuilder = async (pair: string) => {
       },
     };
 
-    if (!prevDaily || !prevWeekly) {
-      log("⚠️ PARTIAL BUILD", {
-        prevDaily,
-        prevWeekly,
-      });
-
-      return result;
-    }
-
-    log("SUCCESS nyBarsBuilder");
-
-    return result;
-
   } catch (e: any) {
-    console.error("💥 nyBarsBuilder FATAL:", e);
+    console.error("💥 nyBarsBuilder:", e);
 
     return {
+      h4: null,
       prevDaily: null,
       prevWeekly: null,
-
-      debug: {
-        error: e.message,
-      },
     };
   }
 };

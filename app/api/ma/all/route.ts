@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 
 import { MARKETS } from "@/lib/constants/markets";
-import { runOnePairMA } from "@/lib/ma/runOnePairMA";
+import { runOnePairMA } from "@/lib/ma/builders/runOnePairMA";
 
 export async function GET() {
   try {

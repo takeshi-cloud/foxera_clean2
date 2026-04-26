@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function DebugPivotRadarPage() {
   const [data, setData] = useState<any[]>([]);
+  const [prevData, setPrevData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/pivot/radar");
+      const res = await fetch("/api/pivot/radar?force=true");
       const json = await res.json();
-      console.log("📊 DEBUG DATA", json);
-      setData(json?.results || []);
+
+      setPrevData(data);
+      setData(Array.isArray(json?.results) ? json.results : []);
     } catch (e) {
-      console.error("❌ fetch error", e);
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -27,213 +30,203 @@ export default function DebugPivotRadarPage() {
   const fmt = (v: any, d = 4) =>
     typeof v === "number" && !isNaN(v) ? v.toFixed(d) : "-";
 
-  const anyFmt = (v: any) => {
-    if (v === null) return "null";
-    if (v === undefined) return "undef";
-    if (typeof v === "number" && isNaN(v)) return "NaN";
-    return String(v);
+  const safe = (v: any) => {
+    try {
+      return JSON.stringify(v, null, 1);
+    } catch {
+      return "-";
+    }
   };
 
-  const time = (ts?: string) => {
-    if (!ts) return "-";
-    const d = new Date(ts);
-    return d.toLocaleString("ja-JP", {
-      timeZone: "Asia/Tokyo",
-    });
+  const colorize = (cur: any, prev: any) => {
+    if (cur === undefined || prev === undefined) return "white";
+    if (Number(cur) !== Number(prev)) return "#60a5fa";
+    return "white";
   };
 
-  const renderTrace = (flow: any[] = []) => {
-    return flow.map((f, i) => {
-      const text =
-        f.step +
-        (f.data ? " " + JSON.stringify(f.data) : "");
+  const prevMap = new Map(prevData.map((r) => [r.symbol, r]));
 
-      const isError =
-        f.step.includes("ERROR") ||
-        f.step.includes("STOP") ||
-        f.step.includes("FAILED");
-
-      return (
-        <div
-          key={i}
-          className={`whitespace-pre-wrap ${
-            isError ? "text-red-400 font-semibold" : ""
-          }`}
-        >
-          {text}
-        </div>
-      );
-    });
-  };
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="p-6 bg-slate-950 text-white min-h-screen">
-
-      <div className="mb-4 flex gap-2">
-        <button
-          onClick={() => (window.location.href = "/")}
-          className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600"
-        >
+    <div style={{ padding: 16, background: "#020617", color: "white" }}>
+      
+      {/* 🔥 HOMEボタン */}
+      <div style={{ marginBottom: 10 }}>
+        <Link href="/" style={{ color: "#60a5fa" }}>
           ← HOME
-        </button>
-
-        <button
-          onClick={load}
-          className="rounded bg-emerald-600 px-3 py-1 text-xs hover:bg-emerald-500"
-        >
-          🔄 再取得
-        </button>
+        </Link>
       </div>
 
-      <h1 className="text-lg font-bold mb-4">
-        🔧 Pivot Radar Debug（完全版）
-      </h1>
+      <h1>Pivot Radar Debug（完全版）</h1>
 
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <div className="overflow-auto border border-slate-700">
-          <table className="w-full text-[10px] border-collapse">
+      <button onClick={load}>🔄 reload</button>
 
-            <thead className="bg-slate-800 text-slate-300">
-              <tr>
-                <th className="p-2 border">Pair</th>
-                <th className="p-2 border">Step</th>
-                <th className="p-2 border">Price</th>
-                <th className="p-2 border">Radar</th>
+      <table
+        style={{
+          width: "100%",
+          fontSize: 11,
+          tableLayout: "fixed", // 🔥 崩れ防止
+        }}
+      >
+        <thead>
+          <tr>
+            <th style={{ width: 80 }}>Pair</th>
+            <th style={{ width: 80 }}>Step</th>
 
-                <th className="p-2 border">Daily Pivot</th>
-                <th className="p-2 border">Weekly Pivot</th>
+            <th style={{ width: 100 }}>Price</th>
+            <th style={{ width: 120 }}>Radar</th>
 
-                <th className="p-2 border">RAW Pivot</th>
+            <th style={{ width: 140 }}>Daily Pivot</th>
+            <th style={{ width: 140 }}>Weekly Pivot</th>
 
-                <th className="p-2 border">NY Daily</th>
-                <th className="p-2 border">NY Weekly</th>
+            <th style={{ width: 200 }}>RAW</th>
 
-                <th className="p-2 border">Range</th>
-                <th className="p-2 border">Counts</th>
+            <th style={{ width: 140 }}>NY Daily</th>
+            <th style={{ width: 140 }}>NY Weekly</th>
 
-                <th className="p-2 border">Trace</th>
-                <th className="p-2 border">Error</th>
+            <th style={{ width: 180 }}>Range</th>
+            <th style={{ width: 100 }}>Counts</th>
+
+            <th style={{ width: 220 }}>Trace</th>
+            <th style={{ width: 100 }}>Error</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {data.map((r, i) => {
+            const s = r?.summary;
+            const pivotRaw = s?.debug?.pivotRaw;
+
+            const bars = pivotRaw?.debug?.bars;
+            const range = bars?.debug?.range;
+            const counts = bars?.debug?.counts;
+            const raw = pivotRaw?.raw;
+
+            const prev = prevMap.get(r.symbol);
+            const prevBars = prev?.summary?.debug?.pivotRaw?.debug?.bars;
+
+            return (
+              <tr key={i}>
+                <td>{r.symbol}</td>
+                <td>{r.step}</td>
+
+                {/* Price */}
+                <td style={{ color: colorize(s?.price?.value, prev?.summary?.price?.value) }}>
+                  {s?.price ? fmt(s.price.value, 5) : "-"}
+                </td>
+
+                {/* Radar */}
+                <td>
+                  <div style={{ color: colorize(s?.radar?.x, prev?.summary?.radar?.x) }}>
+                    X: {fmt(s?.radar?.x)}
+                  </div>
+                  <div style={{ color: colorize(s?.radar?.y, prev?.summary?.radar?.y) }}>
+                    Y: {fmt(s?.radar?.y)}
+                  </div>
+                </td>
+
+                {/* Daily Pivot */}
+                <td>
+                  <div style={{ color: colorize(s?.pivot?.daily?.PP, prev?.summary?.pivot?.daily?.PP) }}>
+                    PP: {fmt(s?.pivot?.daily?.PP ?? s?.pivot?.daily?.pp)}
+                  </div>
+                  <div style={{ color: colorize(s?.pivot?.daily?.R1, prev?.summary?.pivot?.daily?.R1) }}>
+                    R1: {fmt(s?.pivot?.daily?.R1 ?? s?.pivot?.daily?.r1)}
+                  </div>
+                  <div style={{ color: colorize(s?.pivot?.daily?.S1, prev?.summary?.pivot?.daily?.S1) }}>
+                    S1: {fmt(s?.pivot?.daily?.S1 ?? s?.pivot?.daily?.s1)}
+                  </div>
+                </td>
+
+                {/* Weekly Pivot */}
+                <td>
+                  <div style={{ color: colorize(s?.pivot?.weekly?.PP, prev?.summary?.pivot?.weekly?.PP) }}>
+                    PP: {fmt(s?.pivot?.weekly?.PP ?? s?.pivot?.weekly?.pp)}
+                  </div>
+                  <div style={{ color: colorize(s?.pivot?.weekly?.R1, prev?.summary?.pivot?.weekly?.R1) }}>
+                    R1: {fmt(s?.pivot?.weekly?.R1 ?? s?.pivot?.weekly?.r1)}
+                  </div>
+                  <div style={{ color: colorize(s?.pivot?.weekly?.S1, prev?.summary?.pivot?.weekly?.S1) }}>
+                    S1: {fmt(s?.pivot?.weekly?.S1 ?? s?.pivot?.weekly?.s1)}
+                  </div>
+                </td>
+
+                {/* RAW */}
+                <td>
+                  <pre style={{ whiteSpace: "pre-wrap" }}>{safe(raw)}</pre>
+                </td>
+
+                {/* NY Daily */}
+                <td>
+                  <div style={{ color: colorize(bars?.prevDaily?.high, prevBars?.prevDaily?.high) }}>
+                    H: {fmt(bars?.prevDaily?.high)}
+                  </div>
+                  <div style={{ color: colorize(bars?.prevDaily?.low, prevBars?.prevDaily?.low) }}>
+                    L: {fmt(bars?.prevDaily?.low)}
+                  </div>
+                  <div style={{ color: colorize(bars?.prevDaily?.close, prevBars?.prevDaily?.close) }}>
+                    C: {fmt(bars?.prevDaily?.close)}
+                  </div>
+                </td>
+
+                {/* NY Weekly */}
+                <td>
+                  <div style={{ color: colorize(bars?.prevWeekly?.high, prevBars?.prevWeekly?.high) }}>
+                    H: {fmt(bars?.prevWeekly?.high)}
+                  </div>
+                  <div style={{ color: colorize(bars?.prevWeekly?.low, prevBars?.prevWeekly?.low) }}>
+                    L: {fmt(bars?.prevWeekly?.low)}
+                  </div>
+                  <div style={{ color: colorize(bars?.prevWeekly?.close, prevBars?.prevWeekly?.close) }}>
+                    C: {fmt(bars?.prevWeekly?.close)}
+                  </div>
+                </td>
+
+                {/* Range */}
+                <td>
+                  {range && (
+                    <>
+                      D:{range.dailyStart}<br />
+                      →{range.dailyEnd}<br />
+                      W:{range.weeklyStart}<br />
+                      →{range.weeklyEnd}
+                    </>
+                  )}
+                </td>
+
+                {/* Counts */}
+                <td>
+                  {counts && (
+                    <>
+                      i:{counts.intraday}<br />
+                      d:{counts.daily}<br />
+                      w:{counts.weekly}
+                    </>
+                  )}
+                </td>
+
+                {/* 🔥 Trace 折りたたみ */}
+                <td>
+                  <details>
+                    <summary style={{ cursor: "pointer", color: "#60a5fa" }}>
+                      view
+                    </summary>
+                    <pre style={{ fontSize: 10, whiteSpace: "pre-wrap" }}>
+                      {safe(r?.trace?.flow)}
+                    </pre>
+                  </details>
+                </td>
+
+                {/* Error */}
+                <td style={{ color: r.error ? "#f87171" : "white" }}>
+                  {r.error || "-"}
+                </td>
               </tr>
-            </thead>
-
-            <tbody>
-              {data.map((r, i) => {
-                const s = r.summary;
-                const bars = s?.debug?.pivotRaw?.debug?.bars;
-                const range = bars?.debug?.range;
-                const counts = bars?.debug?.counts;
-                const raw = s?.debug?.pivotRaw?.raw;
-
-                return (
-                  <tr key={i} className="border-t border-slate-700 align-top">
-
-                    <td className="p-2 border">{r.symbol}</td>
-                    <td className="p-2 border">{r.step}</td>
-
-                    {/* Price */}
-                    <td className="p-2 border">
-                      {s?.price
-                        ? `${fmt(s.price.value, 5)} @ ${time(s.price.time)}`
-                        : "-"}
-                    </td>
-
-                    {/* Radar */}
-                    <td className="p-2 border">
-                      {s?.radar
-                        ? `X:${fmt(s.radar.x)} Y:${fmt(s.radar.y)}`
-                        : "-"}
-                    </td>
-
-                    {/* Daily Pivot（両対応） */}
-                    <td className="p-2 border">
-                      {s?.pivot?.daily ? (
-                        <>
-                          PP:{fmt(s.pivot.daily.pp ?? s.pivot.daily.PP)}<br />
-                          R1:{fmt(s.pivot.daily.r1 ?? s.pivot.daily.R1)}<br />
-                          S1:{fmt(s.pivot.daily.s1 ?? s.pivot.daily.S1)}
-                        </>
-                      ) : "-"}
-                    </td>
-
-                    {/* Weekly Pivot（両対応） */}
-                    <td className="p-2 border">
-                      {s?.pivot?.weekly ? (
-                        <>
-                          PP:{fmt(s.pivot.weekly.pp ?? s.pivot.weekly.PP)}<br />
-                          R1:{fmt(s.pivot.weekly.r1 ?? s.pivot.weekly.R1)}<br />
-                          S1:{fmt(s.pivot.weekly.s1 ?? s.pivot.weekly.S1)}
-                        </>
-                      ) : "-"}
-                    </td>
-
-                    {/* RAW（ここ最重要） */}
-                    <td className="p-2 border text-[9px]">
-                      <pre>{JSON.stringify(raw, null, 1)}</pre>
-                    </td>
-
-                    {/* NY Daily */}
-                    <td className="p-2 border">
-                      {bars?.prevDaily ? (
-                        <>
-                          H:{fmt(bars.prevDaily.high)}<br />
-                          L:{fmt(bars.prevDaily.low)}<br />
-                          C:{fmt(bars.prevDaily.close)}
-                        </>
-                      ) : "null"}
-                    </td>
-
-                    {/* NY Weekly */}
-                    <td className="p-2 border">
-                      {bars?.prevWeekly ? (
-                        <>
-                          H:{fmt(bars.prevWeekly.high)}<br />
-                          L:{fmt(bars.prevWeekly.low)}<br />
-                          C:{fmt(bars.prevWeekly.close)}
-                        </>
-                      ) : "null"}
-                    </td>
-
-                    {/* Range */}
-                    <td className="p-2 border">
-                      {range ? (
-                        <>
-                          D:{time(range.dailyStart)}<br />
-                          →{time(range.dailyEnd)}<br />
-                          W:{time(range.weeklyStart)}<br />
-                          →{time(range.weeklyEnd)}
-                        </>
-                      ) : "-"}
-                    </td>
-
-                    {/* Counts */}
-                    <td className="p-2 border">
-                      {counts ? (
-                        <>
-                          i:{counts.intraday}<br />
-                          d:{counts.daily}<br />
-                          w:{counts.weekly}
-                        </>
-                      ) : "-"}
-                    </td>
-
-                    {/* Trace */}
-                    <td className="p-2 border">
-                      {renderTrace(r.trace?.flow)}
-                    </td>
-
-                    {/* Error */}
-                    <td className="p-2 border text-red-400">
-                      {r.error || "-"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
