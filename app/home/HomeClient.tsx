@@ -136,7 +136,7 @@ export default function HomeClient() {
         <div
           style={{
             flex: 1.2,
-            minWidth: 140,
+            minWidth: 120,
             maxWidth: 190,
             overflow: "auto",
             opacity: 0.6,
@@ -157,7 +157,7 @@ export default function HomeClient() {
         <div
           style={{
             flex: 2,
-            minWidth: 620,
+            minWidth: 300,
             maxWidth: 720,
             minHeight: "100%",
             overflowY: "auto",
