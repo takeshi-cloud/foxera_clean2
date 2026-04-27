@@ -39,7 +39,7 @@ export function HomeChartControls({
     <div
       style={{
         display: "flex",
-        gap: 6,
+        gap: 2,
         flexWrap: "wrap",
         alignItems: "center",
         flexShrink: 0,
@@ -83,25 +83,33 @@ export function HomeChartControls({
         </option>
       </select>
 
-      <input
-        type="date"
-        value={startDate}
-        onChange={(e) =>
-          onStartDateChange(
-            e.target.value
-          )
-        }
-      />
+<input
+  type="date"
+  value={startDate}
+  onChange={(e) =>
+    onStartDateChange(e.target.value)
+  }
+  style={{
+    width: 110,
+    minWidth: 0,
+    fontSize: 12,
+    padding: "2px 4px",
+  }}
+/>
 
-      <input
-        type="date"
-        value={endDate}
-        onChange={(e) =>
-          onEndDateChange(
-            e.target.value
-          )
-        }
-      />
+<input
+  type="date"
+  value={endDate}
+  onChange={(e) =>
+    onEndDateChange(e.target.value)
+  }
+  style={{
+    width: 110,
+    minWidth: 0,
+    fontSize: 12,
+    padding: "2px 4px",
+  }}
+/>
 
       <button
   onClick={onLoad}

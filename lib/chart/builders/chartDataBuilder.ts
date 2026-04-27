@@ -1,4 +1,4 @@
-import { getChartOHLC } from "../ingest/getChartOHLC";
+import { getChartOHLC } from "../../market/ingest/getChartOHLC";
 import { buildChartSeries } from "../transform/buildChartSeries";
 import { fetchAndSave } from "@/lib/market/ingest/fetchAndSave";
 

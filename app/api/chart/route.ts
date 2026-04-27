@@ -25,5 +25,12 @@ export async function GET(req: Request) {
     end
   );
 
+console.log("CHART API PARAMS", {
+  symbol,
+  tf,
+  start,
+  end,
+});
+
   return NextResponse.json(data);
 }

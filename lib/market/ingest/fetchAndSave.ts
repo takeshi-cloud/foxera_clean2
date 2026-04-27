@@ -78,7 +78,10 @@ export async function fetchAndSave(
     end = endBase.toISOString().slice(0, 10);
   }
 
-  console.log("📅 fetch range:", start, "→", end);
+ console.log("📅 fetch mode:", {
+  type: "latest",
+  outputsize,
+});
 
   // =========================================
   // ④ API取得
@@ -88,8 +91,7 @@ export async function fetchAndSave(
   try {
     data = await fetchOHLC(symbol, apiTimeframe, {
       outputsize,
-      from: start,
-      to: end,
+
     });
 console.log("🔥 FETCH COUNT:", data?.length);
 console.log("🔥 FETCH LAST:", data?.[data.length - 1]);
@@ -160,4 +162,7 @@ console.log("💾 SAVE LAST:", formatted[formatted.length - 1]);
   } catch (e) {
     console.error("❌ save failed:", symbol, e);
   }
+
+  console.log("🔥 FETCH LAST:", data[data.length - 1]);
+console.log("💾 SAVE LAST:", formatted[formatted.length - 1]);
 }

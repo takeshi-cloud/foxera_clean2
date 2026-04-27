@@ -1,7 +1,7 @@
 import { maBarsBuilder } from "./maBarsBuilder";
-
 import { calcMA } from "../calc/calcMA";
 import { sortMAStructure } from "../calc/sortMAStructure";
+import { MA_PERIOD } from "@/lib/constants/markets";
 
 export async function buildMAStructure(
   pair: string
@@ -17,22 +17,46 @@ export async function buildMAStructure(
     bars4h,
   } = await maBarsBuilder(pair);
 
-  const ma15 =
-    calcMA(bars15m);
-  const ma1h =
-    calcMA(bars1h);
-  const ma4h =
-    calcMA(bars4h);
+  // =========================================
+  // 🔥 最新N本だけ使用（最重要）
+  // =========================================
+  const window15 = bars15m.slice(
+    -(MA_PERIOD + 1)
+  );
+  const window1h = bars1h.slice(
+    -(MA_PERIOD + 1)
+  );
+  const window4h = bars4h.slice(
+    -(MA_PERIOD + 1)
+  );
 
   // =========================================
-  // 最新価格は15M終値使用
-  // realtime fetch禁止
+  // MA計算
+  // =========================================
+  const ma15 = calcMA(window15);
+  const ma1h = calcMA(window1h);
+  const ma4h = calcMA(window4h);
+
+  // =========================================
+  // 最新価格（windowベース）
   // =========================================
   const price =
-    bars15m[
-      bars15m.length - 1
-    ].close;
+    window15[
+      window15.length - 1
+    ]?.close;
 
+    console.log("PRICE RAW", {
+  pair,
+  price,
+  lastBar:
+    window15[
+      window15.length - 1
+    ],
+});
+
+  // =========================================
+  // structure
+  // =========================================
   const structureOrder =
     sortMAStructure({
       price,
@@ -61,68 +85,62 @@ export async function buildMAStructure(
       structureOrder,
 
     // =========================================
-    // DEBUG INFO
+    // DEBUG INFO（window基準に統一）
     // =========================================
     debug: {
-      bars_used: 20,
+      bars_used: MA_PERIOD,
 
       bar_15_now:
-        bars15m[
-          bars15m.length - 1
+        window15[
+          window15.length - 1
         ]?.timestamp_utc,
       bar_15_prev:
-        bars15m[
-          bars15m.length - 2
+        window15[
+          window15.length - 2
         ]?.timestamp_utc,
 
       bar_1h_now:
-        bars1h[
-          bars1h.length - 1
+        window1h[
+          window1h.length - 1
         ]?.timestamp_utc,
       bar_1h_prev:
-        bars1h[
-          bars1h.length - 2
+        window1h[
+          window1h.length - 2
         ]?.timestamp_utc,
 
       bar_4h_now:
-        bars4h[
-          bars4h.length - 1
+        window4h[
+          window4h.length - 1
         ]?.timestamp_utc,
       bar_4h_prev:
-        bars4h[
-          bars4h.length - 2
+        window4h[
+          window4h.length - 2
         ]?.timestamp_utc,
 
       ma15_source_range: {
         from:
-          bars15m[
-            bars15m.length - 20
-          ]?.timestamp_utc,
+          window15[0]?.timestamp_utc,
         to:
-          bars15m[
-            bars15m.length - 1
+          window15[
+            window15.length - 1
           ]?.timestamp_utc,
       },
 
       ma1h_source_range: {
         from:
-          bars1h[
-            bars1h.length - 20
-          ]?.timestamp_utc,
+          window1h[0]?.timestamp_utc,
         to:
-          bars1h[
-            bars1h.length - 1
+          window1h[
+            window1h.length - 1
           ]?.timestamp_utc,
       },
 
       ma4h_source_range: {
         from:
-          bars4h[
-            bars4h.length - 20
-          ]?.timestamp_utc,
+          window4h[0]?.timestamp_utc,
         to:
-          bars4h[
-            bars4h.length - 1
+          window4h[
+            window4h.length - 1
           ]?.timestamp_utc,
       },
     },

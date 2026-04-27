@@ -27,14 +27,16 @@ export function HomeChartPanel({
     .toISOString()
     .slice(0, 10);
 
-  const twoDaysAgo = new Date(
-    Date.now() - 1000 * 60 * 60 * 24 * 2
-  )
-    .toISOString()
-    .slice(0, 10);
+  const DAY = 1000 * 60 * 60 * 24;
 
-  const [startDate, setStartDate] =
-    useState(twoDaysAgo);
+const sixDaysAgo = new Date(
+  Date.now() - DAY * 6
+)
+  .toISOString()
+  .slice(0, 10);
+
+const [startDate, setStartDate] =
+  useState(sixDaysAgo);
 
   const [endDate, setEndDate] =
     useState(today);
@@ -140,7 +142,7 @@ export function HomeChartPanel({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        gap: 8,
+        gap: 4,
         minHeight: 0,
         overflow: "hidden",
       }}

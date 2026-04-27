@@ -103,7 +103,7 @@ const CustomLabel = (props: any, activePair: string) => {
         x1={x + 5}
         y1={y + 5}
         x2={isRightSide ? labelX - 6 : labelX + 6}
-        y2={labelY - 4}
+        y2={labelY - 6}
         stroke={isActive ? "#ff00cc" : "white"}
         strokeWidth={isActive ? 2 : 1}
         opacity={0.8}

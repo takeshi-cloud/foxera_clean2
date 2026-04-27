@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { useApiCooldown } from "@/lib/hooks/useApiCooldown";
 import { ApiCooldownBadge } from "@/app/components/ApiCooldownBadge";
+import { useMAStore } from "@/lib/store/maStore";
+import { useRouter } from "next/navigation";
 
 export const MAStatusBar = () => {
   const [updatedAt, setUpdatedAt] =
@@ -17,6 +19,10 @@ export const MAStatusBar = () => {
     isCooling,
     startCooldown,
   } = useApiCooldown();
+
+  // 🔥 これ追加
+  const setData = useMAStore((s) => s.setData);
+  const router = useRouter();
 
   const loadLatestTime =
     async () => {
@@ -57,6 +63,9 @@ export const MAStatusBar = () => {
         const json =
           await res.json();
 
+        // 🔥 これ追加（最重要）
+        setData(json);
+
         const hasError =
           Array.isArray(json) &&
           json.some(
@@ -92,17 +101,17 @@ export const MAStatusBar = () => {
     loadLatestTime();
   }, []);
 
-  return (
+return (
   <div
     style={{
       border: "1px solid #334155",
       borderRadius: 6,
       background: "#020617",
-      padding: "2px 10px",           // ←自由に調整できる
-      lineHeight:1.1,
+      padding: "2px 10px",
+      lineHeight: 1.1,
       fontSize: 12,
-      color: "#e2e8f0",          // ←文字色
-      fontFamily: "sans-serif",  // ←フォント
+      color: "#e2e8f0",
+      fontFamily: "sans-serif",
     }}
   >
     <div
@@ -110,32 +119,50 @@ export const MAStatusBar = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-start",
-        gap: 50,                // ←これが欲しかったやつ
+        gap: 50,
       }}
     >
       <div>
         MA Structure  　更新日時: {updatedAt}
       </div>
 
-      <button
-        onClick={handleRefreshMA}
-        disabled={isCooling || loading}
-        style={{
-          padding: "4px 10px",
-          fontSize: 12,
-          background:
-            isCooling || loading
-              ? "#e9ecf0b7"
-              : "#059669",
-          borderRadius: 4,
-          cursor:
-            isCooling || loading
-              ? "not-allowed"
-              : "pointer",
-        }}
-      >
-        {loading ? "更新中..." : "更新"}
-      </button>
+      {/* 🔥 ボタンをまとめる */}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          onClick={handleRefreshMA}
+          disabled={isCooling || loading}
+          style={{
+            padding: "4px 10px",
+            fontSize: 12,
+            background:
+              isCooling || loading
+                ? "#e9ecf0b7"
+                : "#059669",
+            borderRadius: 4,
+            cursor:
+              isCooling || loading
+                ? "not-allowed"
+                : "pointer",
+          }}
+        >
+          {loading ? "更新中..." : "更新"}
+        </button>
+
+        <button
+          onClick={() => {
+            router.push ( "/debug/maStructure");
+          }}
+          style={{
+            padding: "4px 10px",
+            fontSize: 12,
+            background: "#6366f1",
+            borderRadius: 4,
+            cursor: "pointer",
+          }}
+        >
+          Summary
+        </button>
+      </div>
     </div>
 
     <div style={{ marginTop: -2 }}>

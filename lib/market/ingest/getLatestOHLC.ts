@@ -3,11 +3,11 @@ import {
   TF_TO_TABLE,
 } from "@/lib/constants/chartOptions";
 
-export const getChartOHLC = async (
+export const getLatestOHLC = async (
   symbol: string,
   tf: string,
-  start: string,
-  end: string
+  start?: string,
+  end?: string
 ) => {
   const table = TF_TO_TABLE[tf];
 
@@ -18,12 +18,12 @@ export const getChartOHLC = async (
   const { data, error } = await supabase
     .from(table)
     .select("*")
-    .eq("symbol", symbol) // 🔥 ここ修正
-    .gte("timestamp_utc", start)
-    .lte("timestamp_utc", `${end}T23:59:59`)
-    .order("timestamp_utc", { ascending: true });
+    .eq("symbol", symbol)
+    .order("timestamp_utc", { ascending: false }) // 🔥 最新から取る
+    .limit(1000); // 🔥 必ず上限つける
 
   if (error) throw error;
 
-  return data || [];
+  // 🔥 昇順に戻す（超重要）
+  return (data || []).reverse();
 };

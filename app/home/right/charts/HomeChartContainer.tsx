@@ -7,6 +7,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  ReferenceLine,
 } from "recharts";
 
 type Props = {
@@ -20,37 +21,110 @@ export function HomeChartContainer({
   showLine,
   showZigzag,
 }: Props) {
+
+  // =============================
+  // 🎯 JST変換（安定版）
+  // =============================
+  const toJSTHour = (time: string) => {
+    const d = new Date(time);
+    return (d.getUTCHours() + 9) % 24;
+  };
+
+  const toJSTDate = (time: string) => {
+    const d = new Date(time);
+    d.setHours(d.getHours() + 9);
+    return d.getDate();
+  };
+
+  // =============================
+  // 🎯 CustomTick
+  // =============================
+  const CustomTick = ({ x, y, payload }: any) => {
+    const h = toJSTHour(payload.value);
+    const day = toJSTDate(payload.value);
+
+    const showHour = h === 8 || h === 20;
+    const showDay = h === 0;
+
+    return (
+      <g transform={`translate(${x},${y})`}>
+        {/* 上段：時間 */}
+        {showHour && (
+          <text
+            y={0}
+            dy={10}
+            textAnchor="middle"
+            fill="#ddd"
+            fontSize={12}
+            fontWeight={600}
+          >
+            {h.toString().padStart(2, "0")}
+          </text>
+        )}
+
+        {/* 下段：日付 */}
+        {showDay && (
+          <text
+            y={0}
+            dy={24}
+            textAnchor="middle"
+            fill="#777"
+            fontSize={11}
+          >
+            {day}日
+          </text>
+        )}
+      </g>
+    );
+  };
+
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-      }}
-    >
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-      >
+    <div style={{ width: "100%", height: "100%" }}>
+      <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={merged}
           margin={{
-            top: 10,
-            right: 20,
+            top: 0,
+            right: 15,
             left: 10,
             bottom: 10,
           }}
         >
-          <CartesianGrid stroke="#444" />
+          {/* グリッド */}
+          <CartesianGrid stroke="#444" vertical={false} />
 
+          {/* X軸 */}
           <XAxis
             dataKey="time"
-            hide
+            type="category"
+            interval={0}
+            tickLine={false}
+            ticks={merged
+              .filter((d) => {
+                const h = toJSTHour(d.time);
+                return h === 0 || h === 8 || h === 20;
+              })
+              .map((d) => d.time)}
+            tick={<CustomTick />}
           />
 
-          <YAxis
-            domain={["auto", "auto"]}
-            width={50}
-          />
+          {/* 日付の縦線 */}
+          {merged.map((d, i) => {
+            const h = toJSTHour(d.time);
+            if (h === 0) {
+              return (
+                <ReferenceLine
+                  key={i}
+                  x={d.time}
+                  stroke="#666"
+                  strokeWidth={1.5}
+                />
+              );
+            }
+            return null;
+          })}
+
+          <YAxis domain={["auto", "auto"]} width={50} />
 
           {showLine && (
             <Line
