@@ -4,7 +4,7 @@
 
 import JournalChartSection from "./components/JournalChartSection";
 import { TradeResultPanel } from "./components/TradeResultPanel";
-import { NotesPanel } from "@/app/chart/components/NotesPanel";
+import { NotesPanel } from "@/app/trade-detail/components/NotesPanel";
 import JournalHeaderActions from "./components/JournalHeaderActions";
 
 import { useDetailJournal } from "./hooks/useDetailJournal";

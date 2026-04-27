@@ -269,7 +269,7 @@ export default function TradeJournalPage() {
         journals={displayJournals}
         onOpenJournal={(id) =>
           router.push(
-            `/chart?journalId=${id}`
+            `/trade-detail?journalId=${id}`
           )
         }
         onDelete={handleDelete}

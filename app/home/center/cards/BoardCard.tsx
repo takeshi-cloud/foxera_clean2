@@ -5,6 +5,7 @@ import { supabase } from "@/lib/infra/supabase";
 import { ScreenshotUploadModal } from "@/components/screenshot/ScreenshotUploadModal";
 import { updateNoteCommand } from "@/lib/workflow/board/boardActions"
 import { NoteHistoryModal } from "@/components/note/NoteHistoryModal";
+import { useRouter } from "next/navigation";
 
 export const BoardCard = ({
   item,
@@ -54,6 +55,7 @@ export const BoardCard = ({
   const [editing, setEditing] = useState(false);
   const [noteValue, setNoteValue] = useState(item.note || "");
   const [openHistory, setOpenHistory] = useState(false);
+  const router = useRouter();
 
   // =============================
   // Save
@@ -217,15 +219,32 @@ export const BoardCard = ({
           </span>
 
           <div style={styles.upload}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpenUpload(true);
-              }}
-            >
-              📷
-            </button>
-          </div>
+  {/* 📈 チャート */}
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+
+      // activeセット（親に渡す）
+      onClick?.(item); // ← これでactive連動
+
+      router.push(`/chart?symbol=${item.pair}`);
+    }}
+    style={{ marginRight: 6 }}
+    title="チャートを見る"
+  >
+    📈
+  </button>
+
+  {/* 📸 */}
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      setOpenUpload(true);
+    }}
+  >
+    📷
+  </button>
+</div>
         </div>
 
 {/* NOTE（編集＋履歴） */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
-import { DateLayer } from "../components/DateLayer";
+import { DateLayer } from "./DateLayer";
 
 export function ChartContainer({ merged, showLine, showZigzag }) {
   

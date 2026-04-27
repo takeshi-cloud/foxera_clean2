@@ -81,42 +81,44 @@ export default function JournalChartSection({
       safeState.zigzagDepth
     );
 
-  //----------------------------------------
-  // Parent Sync
-  //----------------------------------------
-  useEffect(() => {
-    if (!initialChartState) return;
+ //----------------------------------------
+// Parent Sync（完全版）
+//----------------------------------------
+useEffect(() => {
+  if (!initialChartState) return;
 
-    setSymbol(
-      initialChartState.symbol
-    );
-    setTf(
-      initialChartState.tf
-    );
-    setStartDate(
-      initialChartState.startDate
-    );
-    setEndDate(
-      initialChartState.endDate
-    );
-    setShowLine(
-      initialChartState.showLine
-    );
-    setShowZigzag(
-      initialChartState.showZigzag
-    );
-    setZigzagDeviation(
-      initialChartState.zigzagDeviation
-    );
-    setZigzagDepth(
-      initialChartState.zigzagDepth
-    );
-  }, [initialChartState]);
+  console.log("🔥 SYNC APPLY", initialChartState);
 
+  setSymbol(initialChartState.symbol);
+  setTf(initialChartState.tf);
+  setStartDate(initialChartState.startDate);
+  setEndDate(initialChartState.endDate);
+  setShowLine(initialChartState.showLine);
+  setShowZigzag(initialChartState.showZigzag);
+  setZigzagDeviation(initialChartState.zigzagDeviation);
+  setZigzagDepth(initialChartState.zigzagDepth);
+
+}, [
+  initialChartState?.symbol,
+  initialChartState?.tf,
+  initialChartState?.startDate,
+  initialChartState?.endDate,
+  initialChartState?.showLine,
+  initialChartState?.showZigzag,
+  initialChartState?.zigzagDeviation,
+  initialChartState?.zigzagDepth,
+]);
   //----------------------------------------
   // Notify Parent
   //----------------------------------------
   useEffect(() => {
+    console.log("🔄 onChartStateChange", {
+      symbol,
+      tf,
+      startDate,
+      endDate,
+    });
+
     onChartStateChange({
       symbol,
       tf,
@@ -142,36 +144,60 @@ export default function JournalChartSection({
   // Load Chart
   //----------------------------------------
   const load = async () => {
-  if (!symbol || !startDate || !endDate) return;
+    console.log("🔥 LOAD START", {
+      symbol,
+      tf,
+      startDate,
+      endDate,
+    });
 
-  const res = await fetch(
-    `/api/chart?symbol=${symbol}&tf=${tf}&start=${startDate}&end=${endDate}`
-  );
+    if (!symbol || !startDate || !endDate) {
+      console.log("⛔ SKIP LOAD（未完成state）");
+      return;
+    }
 
-  // 🔥 ステータスチェック
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("APIエラー:", res.status, text);
-    return;
-  }
+    console.log("🚀 FETCH PARAM", {
+      symbol,
+      tf,
+      startDate,
+      endDate,
+    });
 
-  // 🔥 JSON安全パース
-  let json;
-  try {
-    json = await res.json();
-  } catch (e) {
-    const text = await res.text();
-    console.error("JSONパース失敗:", text);
-    return;
-  }
+    const res = await fetch(
+      `/api/chart?symbol=${symbol}&tf=${tf}&start=${startDate}&end=${endDate}`
+    );
 
-  setData(json);
-};
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("❌ APIエラー:", res.status, text);
+      return;
+    }
+
+    let json;
+    try {
+      json = await res.json();
+    } catch (e) {
+      const text = await res.text();
+      console.error("❌ JSONパース失敗:", text);
+      return;
+    }
+
+    console.log("📊 FETCH RESULT", json?.[0]);
+
+    setData(json);
+  };
 
   //----------------------------------------
   // Auto Load
   //----------------------------------------
   useEffect(() => {
+    console.log("⚠️ AutoLoad fired", {
+      symbol,
+      tf,
+      startDate,
+      endDate,
+    });
+
     load();
   }, [
     symbol,
@@ -198,6 +224,11 @@ export default function JournalChartSection({
   //----------------------------------------
   // Render
   //----------------------------------------
+  console.log("🧠 RENDER", {
+    dataSample: data?.[0],
+    mergedSample: merged?.[0],
+  });
+
   return (
     <div style={{ flex: 1 }}>
       <ChartControls
