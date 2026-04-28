@@ -110,7 +110,7 @@ export default function ImageViewer({ src }: { src: string }) {
 
     setPos({
       x: (cw - imgSize.w * fit) / 2,
-      y: (ch - imgSize.h * fit) / 2 -65,
+      y: (ch - imgSize.h * fit) / 2 -40,
     });
   };
 
@@ -188,7 +188,7 @@ export default function ImageViewer({ src }: { src: string }) {
 
     // 🔥 完全中央（cover対応）
 
-    const offsetY =-65; // ←好きなだけ（10〜30くらい）
+    const offsetY =-40; // ←好きなだけ（10〜30くらい）
     setPos({
       x: (cw - imgW) / 2,
       y: (ch - imgH) / 2 + offsetY,
