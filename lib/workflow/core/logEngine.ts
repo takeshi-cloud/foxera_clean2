@@ -7,6 +7,7 @@ import { updateBoardFromLog } from "./boardEngine";
 import { ActionType } from "@/lib/constants/LogOptions";
 import { LogSourceType } from "@/lib/constants/LogOptions";
 import { supabase } from "@/lib/infra/supabase"; // ←追加
+import { ACTIONS } from "@/lib/constants/LogOptions";
 
 // -----------------------------------------
 // 🎛 モード管理
@@ -134,10 +135,13 @@ export const createLog = async (
       group_id, // ←🔥これだけ追加
     };
 
-    if (!payload.timeframe_type) {
-      console.error("❌ timeframe_type null", payload);
-      return;
-    }
+   if (
+  !payload.timeframe_type &&
+  payload.action !== ACTIONS[8]
+) {
+  console.error("❌ timeframe_type null", payload);
+  return;
+}
 
     console.log("🔥 createLog:", payload);
 

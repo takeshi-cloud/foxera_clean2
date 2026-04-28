@@ -6,7 +6,12 @@ export const getIntradayOHLC = async (
   from: Date,
   to: Date
 ) => {
-  console.log("📥 getIntradayOHLC START:", { symbol, from, to });
+
+  const log = (type: string, step: string, data?: any) => {
+    console.log(`[intraday][${type}] ${step}`, data ?? "");
+  };
+
+  log("FLOW", "START", { symbol });
 
   if (!symbol) {
     throw new Error("❌ symbol undefined in getIntradayOHLC");
@@ -17,10 +22,13 @@ export const getIntradayOHLC = async (
   const fromISO = from.toISOString();
   const toISO = to.toISOString();
 
-  console.log("🕒 RANGE:", { from: fromISO, to: toISO });
+  log("DATA", "REQUEST RANGE", {
+    from: fromISO,
+    to: toISO,
+  });
 
   // =========================================
-  // ① DB取得
+  // DB取得
   // =========================================
   let { data } = await supabase
     .from("ohlc_1h")
@@ -30,32 +38,35 @@ export const getIntradayOHLC = async (
     .lte("timestamp_utc", toISO)
     .order("timestamp_utc", { ascending: true });
 
-  console.log("📊 DB rows:", data?.length || 0);
+  log("DATA", "DB RESULT", {
+    count: data?.length || 0,
+  });
 
   const latest = data?.[data.length - 1];
 
   // =========================================
-  // 🔥 ② 必要なときだけfetch
+  // fetch判定
   // =========================================
 
   let needFetch = false;
 
   if (!data?.length) {
-    console.log("⚠️ NO DATA → fetch");
+    log("FLOW", "NO DATA → FETCH");
     needFetch = true;
   } else if (latest) {
     const latestTime = new Date(latest.timestamp_utc);
     const diff = to.getTime() - latestTime.getTime();
 
-    // 👉 1時間以上ズレてたらfetch
     if (diff > 60 * 60 * 1000) {
-      console.log("⚠️ DATA OLD → fetch");
+      log("FLOW", "DATA OLD → FETCH", {
+        diffMin: diff / 60000,
+      });
       needFetch = true;
     }
   }
 
   if (needFetch) {
-    console.log("🔥 CONDITIONAL FETCH");
+    log("FLOW", "FETCH START");
 
     await fetchAndSave(
       symbol,
@@ -63,8 +74,6 @@ export const getIntradayOHLC = async (
       fromISO.slice(0, 10),
       toISO.slice(0, 10)
     );
-
-    console.log("⏳ waiting DB reflect...");
 
     let retry = 0;
 
@@ -77,7 +86,10 @@ export const getIntradayOHLC = async (
         .lte("timestamp_utc", toISO)
         .order("timestamp_utc", { ascending: true });
 
-      console.log(`🔁 retry ${retry}:`, res.data?.length || 0);
+      log("FLOW", "RETRY", {
+        retry,
+        count: res.data?.length || 0,
+      });
 
       if (res.data?.length) {
         data = res.data;
@@ -88,14 +100,14 @@ export const getIntradayOHLC = async (
       retry++;
     }
   } else {
-    console.log("✅ FETCH SKIPPED");
+    log("FLOW", "FETCH SKIPPED");
   }
 
   // =========================================
-  // ③ fallback
+  // fallback
   // =========================================
   if (!data?.length) {
-    console.warn("⚠️ fallback: get latest 50 bars");
+    log("ERROR", "FALLBACK TRIGGERED");
 
     const res = await supabase
       .from("ohlc_1h")
@@ -111,7 +123,42 @@ export const getIntradayOHLC = async (
     throw new Error("No intraday data");
   }
 
-  console.log("✅ RETURN rows:", data.length);
+  // =========================================
+  // 🔥 最重要：データ品質チェック
+  // =========================================
+
+  const first = data[0];
+  const last = data[data.length - 1];
+
+  const spanHours =
+    (new Date(last.timestamp_utc).getTime() -
+      new Date(first.timestamp_utc).getTime()) /
+    (1000 * 60 * 60);
+
+  log("DATA", "FINAL DATA RANGE", {
+    start: first.timestamp_utc,
+    end: last.timestamp_utc,
+    count: data.length,
+    spanHours,
+  });
+
+  // 🔥 ギャップチェック（軽量）
+  let gaps = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const prev = new Date(data[i - 1].timestamp_utc).getTime();
+    const curr = new Date(data[i].timestamp_utc).getTime();
+
+    if (curr - prev > 60 * 60 * 1000 + 1000) {
+      gaps++;
+    }
+  }
+
+  log("DATA", "GAP CHECK", {
+    gaps,
+  });
+
+  log("FLOW", "RETURN");
 
   return data;
 };

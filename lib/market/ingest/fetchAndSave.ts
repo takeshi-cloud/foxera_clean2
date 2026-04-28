@@ -83,32 +83,60 @@ export async function fetchAndSave(
   outputsize,
 });
 
-  // =========================================
-  // ④ API取得
-  // =========================================
-  let data;
+ // =========================================
+// ④ API取得
+// =========================================
+let data;
 
-  try {
-    data = await fetchOHLC(symbol, apiTimeframe, {
-      outputsize,
+try {
+  // 🔥 何を取りに行ってるか（意図）
+  console.log("📡 FETCH REQUEST", {
+    symbol,
+    timeframe,
+    requestedFrom: from,
+    requestedTo: to,
+    adjustedFrom: start,
+    adjustedTo: end,
+    outputsize,
+  });
 
-    });
-console.log("🔥 FETCH COUNT:", data?.length);
-console.log("🔥 FETCH LAST:", data?.[data.length - 1]);
+ data = await fetchOHLC(symbol, apiTimeframe, {
+  from: start,
+  to: end,
+  outputsize,
+});
 
-  } catch (e) {
-    console.error("❌ fetchOHLC failed:", e);
-    return;
-  }
+  // 既存ログ（そのまま残す）
+  console.log("🔥 FETCH COUNT:", data?.length);
+  console.log("🔥 FETCH LAST:", data?.[data.length - 1]);
 
-  if (!data?.length) {
-    console.warn("⚠️ no data fetched:", {
-      symbol,
-      timeframe,
-    });
-    return;
-  }
+  // 🔥 実際に取れた範囲
+  console.log("📡 FETCH RANGE", {
+    first: data?.[0]?.timestamp_utc,
+    last: data?.[data.length - 1]?.timestamp_utc,
+    count: data?.length,
+  });
 
+  // 🔥 リクエストとの差分
+  console.log("📡 REQUEST vs RESULT", {
+    requestedFrom: from,
+    requestedTo: to,
+    actualFrom: data?.[0]?.timestamp_utc,
+    actualTo: data?.[data.length - 1]?.timestamp_utc,
+  });
+
+} catch (e) {
+  console.error("❌ fetchOHLC failed:", e);
+  return;
+}
+
+if (!data?.length) {
+  console.warn("⚠️ no data fetched:", {
+    symbol,
+    timeframe,
+  });
+  return;
+}
   // =========================================
   // ⑤ テーブル
   // =========================================

@@ -36,6 +36,9 @@ export async function GET(req: Request) {
 
     const results: any[] = [];
 
+    // 🔥 追加（ここだけ）
+    const debugLogs: any[] = [];
+
     // =========================================
     // 🔥 ここから変更（3並列）
     // =========================================
@@ -81,25 +84,21 @@ export async function GET(req: Request) {
               symbol: m.api,
               key: m.key,
               step: "cache",
-
               summary: latest
                 ? {
                     price: {
                       value: latest.price,
                       time: latest.price_timestamp,
                     },
-
                     radar: {
                       x: latest.x,
                       y: latest.y,
                       time: latest.timestamp,
                     },
-
                     pivot: null,
                     ohlc: null,
                   }
                 : null,
-
               error: null,
             };
           }
@@ -111,10 +110,21 @@ export async function GET(req: Request) {
 
           const result = await runOnePair(m.api);
 
-          log("DONE", {
-            market: m.api,
-            step: result?.step,
-          });
+log("DONE", {
+  market: m.api,
+  step: result?.step,
+});
+
+// 🔥 ここを書き換え（これが正解）
+debugLogs.push({
+  symbol: m.api,
+
+  // 🔥 これが本体（絶対必要）
+  debug: result?.summary?.debug ?? null,
+
+  // ログ（あってもいい）
+  flow: result?.trace?.flow ?? [],
+});
 
           return {
             label: m.label,
@@ -132,15 +142,13 @@ export async function GET(req: Request) {
     }
 
     // =========================================
-    // 🔥 ここまで変更
-    // =========================================
-
     log("END");
 
     return Response.json({
       success: true,
       count: results.length,
       results,
+      debugLogs, // 🔥 ここ追加
     });
   } catch (e: any) {
     console.error("[RADAR API] FATAL", e);

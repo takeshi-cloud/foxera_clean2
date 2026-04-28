@@ -21,8 +21,22 @@ export const pivotBuilder = async (
   symbol: string,
   ctx: any
 ) => {
-  const log = (step: string, data?: any) => {
-    console.log(`[pivotBuilder] ${step}`, data ?? "");
+
+  const log = (a: string, b?: any, c?: any) => {
+    let type = "FLOW";
+    let msg = "";
+    let data = null;
+
+    if (c !== undefined) {
+      type = a;
+      msg = b;
+      data = c;
+    } else {
+      msg = a;
+      data = b ?? null;
+    }
+
+    console.log(`[pivotBuilder][${type}] ${msg}`, data ?? "");
   };
 
   const {
@@ -34,22 +48,18 @@ export const pivotBuilder = async (
     weeklyBase,
   } = ctx;
 
-  // =========================================
-  // NY足生成（完全依存）
-  // =========================================
-  log("NY BUILDER CALL");
+  log("FLOW", "NY BUILDER CALL");
 
   let bars: any = null;
 
   try {
     bars = await nyBarsBuilder(symbol);
   } catch (e: any) {
-    log("NY BUILDER ERROR", e.message);
+    log("ERROR", "NY BUILDER", e.message);
   }
 
-  // 🔥 安全ガード（ここそのまま）
   if (!bars) {
-    log("NY BUILDER EMPTY");
+    log("ERROR", "NY BUILDER EMPTY");
 
     return {
       daily: null,
@@ -66,20 +76,85 @@ export const pivotBuilder = async (
   const hasDailyBars = !!bars.prevDaily;
   const hasWeeklyBars = !!bars.prevWeekly;
 
-  log("NY RESULT", {
-    daily: hasDailyBars,
-    weekly: hasWeeklyBars,
+  // =========================================
+  // 🔥 ① 元データ（既存）
+  // =========================================
+  log("DATA", "NY RESULT", {
+    hasDailyBars,
+    hasWeeklyBars,
+
+    dailySource: bars.prevDaily
+      ? {
+          high: bars.prevDaily.high,
+          low: bars.prevDaily.low,
+          close: bars.prevDaily.close,
+        }
+      : null,
+
+    weeklySource: bars.prevWeekly
+      ? {
+          high: bars.prevWeekly.high,
+          low: bars.prevWeekly.low,
+          close: bars.prevWeekly.close,
+        }
+      : null,
+  });
+
+console.log("=== WEEKLY RAW HIGH ===");
+console.log(bars.raw?.weekly?.map((b:any) => b.high));
+
+console.log("=== WEEKLY MAX HIGH ===");
+console.log(
+  Math.max(...(bars.raw?.weekly || []).map((b:any) => b.high))
+);
+
+  // =========================================
+  // 🔥 ② 追加：期間ログ（これが今回の核心）
+  // =========================================
+  log("DATA", "NY RANGE", {
+    daily: bars.prevDaily
+      ? {
+          start: bars.prevDaily.start ?? null,
+          end: bars.prevDaily.end ?? null,
+          count: bars.prevDaily.count ?? null,
+        }
+      : null,
+
+    weekly: bars.prevWeekly
+      ? {
+          start: bars.prevWeekly.start ?? null,
+          end: bars.prevWeekly.end ?? null,
+          count: bars.prevWeekly.count ?? null,
+        }
+      : null,
+  });
+
+  // =========================================
+  // 🔥 ③ 時間メタ（既存＋補強）
+  // =========================================
+  log("DATA", "NY SOURCE TIME", {
+    daily: bars.prevDaily?.time ?? null,
+    weekly: bars.prevWeekly?.time ?? null,
+  });
+
+  // 🔥 追加（pivotの日付）
+  log("DATA", "PIVOT SOURCE DATE", {
+    daily: dailyStr,
+    weekly: weeklyStr,
+  });
+
+  // =========================================
+  log("FLOW", "PIVOT SOURCE", {
+    daily: hasDailyBars ? "NY" : "FALLBACK",
+    weekly: hasWeeklyBars ? "NY" : "FALLBACK",
   });
 
   let d = daily;
   let w = weekly;
 
-  // =========================================
-  // DAILY
-  // =========================================
+  // ================= DAILY =================
   if (!daily) {
     if (hasDailyBars) {
-      log("BUILD DAILY");
 
       const p = calcPivot(
         bars.prevDaily.high,
@@ -100,9 +175,8 @@ export const pivotBuilder = async (
         type: "standard",
       });
 
-      log("SAVE DAILY OK");
     } else {
-      log("FALLBACK DAILY");
+      log("FLOW", "FALLBACK DAILY");
 
       const { data } = await supabase
         .from("pivot_levels")
@@ -115,17 +189,14 @@ export const pivotBuilder = async (
 
       if (data) {
         d = data;
-        log("FALLBACK DAILY OK");
+        log("RESULT", "FALLBACK DAILY OK");
       }
     }
   }
 
-  // =========================================
-  // WEEKLY
-  // =========================================
+  // ================= WEEKLY =================
   if (!weekly) {
     if (hasWeeklyBars) {
-      log("BUILD WEEKLY");
 
       const p = calcPivot(
         bars.prevWeekly.high,
@@ -146,9 +217,8 @@ export const pivotBuilder = async (
         type: "standard",
       });
 
-      log("SAVE WEEKLY OK");
     } else {
-      log("FALLBACK WEEKLY");
+      log("FLOW", "FALLBACK WEEKLY");
 
       const { data } = await supabase
         .from("pivot_levels")
@@ -161,34 +231,46 @@ export const pivotBuilder = async (
 
       if (data) {
         w = data;
-        log("FALLBACK WEEKLY OK");
+        log("RESULT", "FALLBACK WEEKLY OK");
       }
     }
   }
 
-  // =========================================
-  // 最終判定（そのまま）
-  // =========================================
   if (!d && !w) {
-    log("FINAL FAIL (no pivot)");
+    log("ERROR", "FINAL FAIL (no pivot)");
     return null;
   }
 
-  log("END");
+  log("FLOW", "END");
 
   return {
-    daily: d ? mapPivot(d) : null,
-    weekly: w ? mapPivot(w) : null,
+  daily: d ? mapPivot(d) : null,
+  weekly: w ? mapPivot(w) : null,
 
-    debug: {
-      source: "build",
-      bars: bars,
-      raw: { daily: d ?? null, weekly: w ?? null },
-      baseTime: { daily: dailyBase, weekly: weeklyBase },
-      flags: {
-        hasDailyBars,
-        hasWeeklyBars,
-      },
-    },
-  };
+debug: {
+  source: "build",
+
+  ny: {
+    daily: bars?.prevDaily || null,
+    weekly: bars?.prevWeekly || null,
+  },
+
+  raw: {
+    daily: bars?.raw?.daily || null,
+    weekly: bars?.raw?.weekly || null,
+  },
+
+  // 👇 これ追加
+  weeklyCheck: {
+    high: Math.max(...bars.raw.weekly.map(b => b.high)),
+    low: Math.min(...bars.raw.weekly.map(b => b.low)),
+    close: bars.raw.weekly.at(-1)?.close,
+  },
+
+  baseTime: {
+    daily: dailyBase,
+    weekly: weeklyBase,
+  },
+}
+};
 };

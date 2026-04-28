@@ -2,7 +2,7 @@ import { supabase } from "@/lib/infra/supabase";
 import { getBaseTime } from "../utils/getBaseTime";
 import { pivotBuilder } from "../builders/pivotBuilder";
 
-// helperはそのまま必要
+// helper
 const mapPivot = (p: any) => ({
   PP: p.pivot,
   R1: p.r1,
@@ -27,7 +27,7 @@ export const getPivot = async (symbol: string) => {
   const weeklyStr = weeklyBase.start.toISOString().slice(0, 10);
 
   // =========================================
-  // DB取得（←そのまま）
+  // DB取得
   // =========================================
   const { data: daily } = await supabase
     .from("pivot_levels")
@@ -48,24 +48,52 @@ export const getPivot = async (symbol: string) => {
   log("DB", { daily: !!daily, weekly: !!weekly });
 
   // =========================================
-  // 完全キャッシュ（←そのまま）
+  // CACHE（ロジック不変 + debug補完）
   // =========================================
   if (daily && weekly) {
     log("CACHE HIT");
+
     return {
       daily: mapPivot(daily),
       weekly: mapPivot(weekly),
+
       debug: {
         source: "cache",
-        bars: null,
-        raw: { daily, weekly },
-        baseTime: { daily: dailyBase, weekly: weeklyBase },
+
+        // NY OHLC（DB値そのまま）
+        ny: {
+          daily: {
+            high: daily.high,
+            low: daily.low,
+            close: daily.close,
+          },
+          weekly: {
+            high: weekly.high,
+            low: weekly.low,
+            close: weekly.close,
+          },
+        },
+
+        // rawはcacheでは存在しない
+        raw: null,
+
+        // 🔥 検証用（buildと形式統一）
+        weeklyCheck: {
+          high: weekly.high,
+          low: weekly.low,
+          close: weekly.close,
+        },
+
+        baseTime: {
+          daily: dailyBase,
+          weekly: weeklyBase,
+        },
       },
     };
   }
 
   // =========================================
-  // 🔥 ここだけ追加（1行）
+  // BUILD（既存ロジックそのまま）
   // =========================================
   return await pivotBuilder(symbol, {
     daily,

@@ -29,6 +29,26 @@ export const updateBoardFromLog = async (
       return;
     }
 
+// =====================================
+// 🟥 WAIT専用削除（最優先）
+// =====================================
+if (log.action === "delete_wait") {
+  const { error } = await supabase
+    .from("board")
+    .delete()
+    .eq("user_id", log.user_id)
+    .eq("pair", normalize(log.pair))
+    .eq("phase", "Wait");
+
+  if (error) {
+    console.error("❌ delete_wait error:", error);
+  } else {
+    console.log("🧹 WAIT全削除");
+  }
+
+  return;
+}
+
     // =====================================
     // 🧭 timeframe決定
     // =====================================

@@ -149,7 +149,7 @@ export default function HomeClient() {
             setCursor={setCursor}
             activePair={activePair}
             setActivePair={setActivePair}
-            onRemove={(item) => handleRemove(item, load)}
+            onRemove={(item) => handleRemove(item, load, boards)}
           />
         </div>
 
@@ -171,9 +171,9 @@ export default function HomeClient() {
             onToggleDirection={(item) =>
               handleToggleDirection(item, load)
             }
-            onRemove={(item) => handleRemove(item, load)}
+            onRemove={(item) => handleRemove(item, load, boards)}
             onMoveToWait={(item) =>
-              handleMoveToWait(item, load)
+              handleMoveToWait(item, load, boards)
             }
             onCreateShort={(item) =>
               handleCreateShort(item, load, boards)

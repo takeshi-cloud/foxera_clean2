@@ -16,6 +16,10 @@ export const CHART_SYMBOLS = [
   { label: "USD/CHF", value: "USD/CHF" },
   { label: "USD/CAD", value: "USD/CAD" },
 
+   { label: "EUR/AUD", value: "EUR/AUD" },
+  { label: "GBP/AUD", value: "GBP/AUD" },
+    { label: "EUR/GBP", value: "EUR/GBP" },
+
   // 商品
   { label: "Gold (XAU/USD)", value: "XAU/USD" },
   { label: "Silver (XAG/USD)", value: "XAG/USD" },

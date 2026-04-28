@@ -39,17 +39,19 @@ export const handleToggleDirection = async (
 // 削除
 export const handleRemove = async (
   item: any,
-  load: () => Promise<void>
+  load: () => Promise<void>,
+  boards: any[]
 ) => {
-  await run(() => removeBoardCommand(item), load);
+ await run(() => moveToWaitCommand(item), load);
 };
 
 // WAITへ移動
 export const handleMoveToWait = async (
   item: any,
-  load: () => Promise<void>
+  load: () => Promise<void>,
+  boards: any[]
 ) => {
-  await run(() => moveToWaitCommand(item), load);
+ await run(() => moveToWaitCommand(item), load);
 };
 
 // =========================================

@@ -3,12 +3,21 @@
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import JournalChartSection from "@/app/trade-detail/components/JournalChartSection";
+import { MARKETS } from "@/lib/constants/markets";
 
 export default function ClientChartPage() {
   const params = useSearchParams();
 
-  const symbol =
-    params.get("symbol") || "USD/JPY";
+  // 🔥 URLから受け取る（key）
+  const rawSymbol = params.get("symbol");
+
+  // 🔥 key → label に変換（ここだけ追加）
+  const market = MARKETS.find(
+    (m) => m.key === rawSymbol
+  );
+  console.log("rawSymbol:", rawSymbol);
+
+  const symbol = market?.label;
 
   // 今日
   const today = new Date();
@@ -25,6 +34,9 @@ export default function ClientChartPage() {
 
   const [chartState, setChartState] =
     useState(null);
+
+  // ❗ symbolなければ描画しない
+  if (!symbol) return null;
 
   return (
     <div

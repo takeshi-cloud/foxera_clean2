@@ -2,8 +2,9 @@ import { getIntradayOHLC } from "../ingest/getIntradayOHLC";
 import { getBaseTime } from "../utils/getBaseTime";
 
 export const nyBarsBuilder = async (pair: string) => {
-  const log = (step: string, data?: any) => {
-    console.log("🧱", step, data ?? "");
+
+  const log = (type: string, step: string, data?: any) => {
+    console.log(`[nyBars][${type}] ${step}`, data ?? "");
   };
 
   try {
@@ -15,24 +16,26 @@ export const nyBarsBuilder = async (pair: string) => {
 
     const fetchTo = dailyRange.end;
 
-    log("FETCH RANGE", {
+    log("DATA", "FETCH RANGE", {
       from: fetchFrom.toISOString(),
       to: fetchTo.toISOString(),
     });
 
     const intraday = await getIntradayOHLC(pair, fetchFrom, fetchTo);
-    log("INTRADAY RANGE", {
-  start: intraday[0]?.timestamp_utc,
-  end: intraday[intraday.length - 1]?.timestamp_utc,
-  count: intraday.length,
-});
+
+    log("DATA", "INTRADAY RANGE", {
+      start: intraday[0]?.timestamp_utc,
+      end: intraday[intraday.length - 1]?.timestamp_utc,
+      count: intraday.length,
+    });
 
     if (!intraday?.length) {
+      log("ERROR", "NO INTRADAY DATA");
       return { h4: null, prevDaily: null, prevWeekly: null };
     }
 
     // =========================
-    // FILTER（NY日足・週足）
+    // FILTER
     // =========================
 
     const dailyData = intraday.filter((d) => {
@@ -46,45 +49,103 @@ export const nyBarsBuilder = async (pair: string) => {
     });
 
     // =========================
-    // BUILD共通
+    // 🔥 極値の発生位置を取る（ロジック影響なし）
     // =========================
 
-    const build = (data: any[]) => {
+    const findExtremes = (data: any[]) => {
       if (!data.length) return null;
 
+      let high = data[0];
+      let low = data[0];
+
+      for (const d of data) {
+        if (d.high > high.high) high = d;
+        if (d.low < low.low) low = d;
+      }
+
       return {
-        open: data[0].open,
-        high: Math.max(...data.map((d) => d.high)),
-        low: Math.min(...data.map((d) => d.low)),
-        close: data[data.length - 1].close,
+        high: {
+          value: high.high,
+          time: high.timestamp_utc,
+        },
+        low: {
+          value: low.low,
+          time: low.timestamp_utc,
+        },
       };
     };
 
-    const prevDaily = build(dailyData);
-    log("DAILY DATA RANGE", {
-  start: dailyData[0]?.timestamp_utc,
-  end: dailyData[dailyData.length - 1]?.timestamp_utc,
-  count: dailyData.length,
-  high: prevDaily?.high,
-  low: prevDaily?.low,
-});
-    const prevWeekly = build(weeklyData);
-    log("WEEKLY DATA RANGE", {
-  start: weeklyData[0]?.timestamp_utc,
-  end: weeklyData[weeklyData.length - 1]?.timestamp_utc,
-  count: weeklyData.length,
-});
+    const dailyExt = findExtremes(dailyData);
+    const weeklyExt = findExtremes(weeklyData);
 
     // =========================
-    // 🔥 NY基準 4H生成（DST対応版）
+    // BUILD
+    // =========================
+
+ const build = (data: any[]) => {
+  if (!data.length) return null;
+
+  return {
+    open: data[0].open,
+    high: Math.max(...data.map((d) => d.high)),
+    low: Math.min(...data.map((d) => d.low)),
+    close: data[data.length - 1].close,
+
+    // 🔥 これ追加（これが欲しかったやつ）
+    start: data[0].timestamp_utc,
+    end: data[data.length - 1].timestamp_utc,
+    count: data.length,
+  };
+};
+
+    const prevDaily = build(dailyData);
+
+    log("DATA", "DAILY SUMMARY", {
+      range: {
+        start: dailyData[0]?.timestamp_utc,
+        end: dailyData[dailyData.length - 1]?.timestamp_utc,
+      },
+      count: dailyData.length,
+      high: dailyExt?.high,
+      low: dailyExt?.low,
+    });
+
+    const prevWeekly = build(weeklyData);
+
+    log("DATA", "WEEKLY SUMMARY", {
+      range: {
+        start: weeklyData[0]?.timestamp_utc,
+        end: weeklyData[weeklyData.length - 1]?.timestamp_utc,
+      },
+      count: weeklyData.length,
+      high: weeklyExt?.high,
+      low: weeklyExt?.low,
+    });
+
+
+console.log("=== DAILY BARS ===");
+console.log(dailyData.map(b => b.timestamp_utc));
+
+console.log("=== BASE TIME DAILY ===");
+console.log(dailyRange.start, dailyRange.end);
+
+console.log("=== WEEKLY BARS ===");
+console.log(weeklyData.map(b => b.timestamp_utc));
+
+console.log("=== BASE TIME WEEKLY ===");
+console.log(weeklyRange.start, weeklyRange.end);
+
+
+
+    // =========================
+    // H4
     // =========================
 
     const build4H = (data: any[]) => {
       if (!data.length) return [];
 
       const result: any[] = [];
-
-      const base = dailyRange.start.getTime(); // ← NY開始（DST込み）
+      const base = dailyRange.start.getTime();
 
       let current: any[] = [];
       let currentBlock: number | null = null;
@@ -134,12 +195,17 @@ export const nyBarsBuilder = async (pair: string) => {
     };
 
     const h4 = build4H(intraday);
-    log("H4 SAMPLE", h4?.[0]);
+
+    log("DATA", "H4 SAMPLE", h4?.[0]);
 
     return {
       h4,
       prevDaily,
       prevWeekly,
+  raw: {
+    daily: dailyData,
+    weekly: weeklyData,
+  },
 
       debug: {
         range: {
@@ -159,6 +225,10 @@ export const nyBarsBuilder = async (pair: string) => {
   } catch (e: any) {
     console.error("💥 nyBarsBuilder:", e);
 
+
+
+
+    
     return {
       h4: null,
       prevDaily: null,

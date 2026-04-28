@@ -14,20 +14,69 @@ import {
 
 
 // =========================================
-// 🟥 WAITへ移動
+// 🟥 delete_wait 専用コマンド
 // =========================================
-export const moveToWaitCommand = async (item: any) => {
-  await createLog({
-    user_id: item.user_id,
-    pair: item.pair,
-    timeframe_type: item.timeframe_type,
-    direction: null,
-    phase: PHASES[0],
-    image_url: item.image_url,
-    action: ACTIONS[3],
-  }, LOG_SOURCES[0]); // board_action
+export const deleteWaitCommand = async (
+  user_id: string,
+  pair: string
+) => {
+  await createLog(
+    {
+      user_id,
+      pair,
+      action: ACTIONS[8], 
+    },
+    LOG_SOURCES[0]
+  );
 };
 
+
+// =========================================
+// 🟥 WAIT専用削除（UI用ラッパー）
+// =========================================
+export const removeWaitOnlyCommand = async (item: any) => {
+  if (!item?.user_id || !item?.pair) return;
+console.log("② delete_wait createLog 実行");
+
+  await deleteWaitCommand(item.user_id, item.pair);
+};
+
+
+// =========================================
+// 🟥 WAITへ移動（完成形）
+// =========================================
+export const moveToWaitCommand = async (item: any) => {
+  console.log("① deleteWaitCommand 発火");
+
+
+  // ① WAIT全削除（専用コマンド）
+  await deleteWaitCommand(item.user_id, item.pair);
+
+  // ② WAIT作成
+  await createLog(
+    {
+      user_id: item.user_id,
+      pair: item.pair,
+      timeframe_type: item.timeframe_type,
+      direction: null,
+      phase: PHASES[0],
+      image_url: item.image_url,
+      action: ACTIONS[3],
+    },
+    LOG_SOURCES[0]
+  );
+
+  // ③ 元ボード削除
+  await createLog(
+    {
+      user_id: item.user_id,
+      pair: item.pair,
+      timeframe_type: item.timeframe_type,
+      action: "delete_board",
+    },
+    LOG_SOURCES[0]
+  );
+};
 
 // =========================================
 // 🟦 SHORT作成（新規）
@@ -77,9 +126,10 @@ export const removeBoardCommand = async (item: any) => {
     direction: item.direction,
     phase: PHASES[0],
     image_url: item.image_url,
-    action: ACTIONS[4], // delete_board
+    action: ACTIONS[4],
   }, LOG_SOURCES[0]);
 };
+
 
 
 // =========================================

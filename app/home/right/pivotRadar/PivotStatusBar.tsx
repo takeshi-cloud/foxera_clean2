@@ -48,6 +48,14 @@ export default function PivotStatusBar() {
 
       const json = await res.json();
 
+      // 🔥 ログ保存だけ追加（UI変更なし）
+      if (json?.debugLogs) {
+        sessionStorage.setItem(
+          "debugLogs",
+          JSON.stringify(json.debugLogs)
+        );
+      }
+
       if (Array.isArray(json)) {
         const successCount = json.filter((r) => r.success).length;
         if (successCount === 0) throw new Error("All failed");
@@ -149,7 +157,7 @@ export default function PivotStatusBar() {
           <button
             onClick={() =>
               (window.location.href =
-                "/debug/pivotRadar")
+                "/debug/pivotRadar2")
             }
             style={{
               padding: "4px 8px",

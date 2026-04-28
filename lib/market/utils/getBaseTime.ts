@@ -1,7 +1,11 @@
 type Timeframe = "daily" | "weekly";
 
+const log = (type: string, step: string, data?: any) => {
+  console.log(`[baseTime][${type}] ${step}`, data ?? "");
+};
+
 // =========================================
-// NYクローズ（17:00 NY = 21:00 UTC）
+// NYクローズ
 // =========================================
 function getNYCloseUTC(base = new Date()) {
   const d = new Date(base);
@@ -9,7 +13,6 @@ function getNYCloseUTC(base = new Date()) {
   const close = new Date(d);
   close.setUTCHours(21, 0, 0, 0);
 
-  // まだ当日クローズしてない場合 → 前日にずらす
   if (d.getTime() < close.getTime()) {
     close.setUTCDate(close.getUTCDate() - 1);
   }
@@ -18,66 +21,81 @@ function getNYCloseUTC(base = new Date()) {
 }
 
 // =========================================
-// 最後の営業日クローズ取得（🔥土日スキップ）
+// DAILY
 // =========================================
 function getLastDailyClose(base = new Date()) {
   const end = getNYCloseUTC(base);
-  const day = end.getUTCDay(); // 0=日,6=土
+  const day = end.getUTCDay();
 
-  // 土曜 → 金曜
   if (day === 6) {
     end.setUTCDate(end.getUTCDate() - 1);
   }
 
-  // 日曜 → 金曜
   if (day === 0) {
     end.setUTCDate(end.getUTCDate() - 2);
   }
+
+  log("DATA", "DAILY CLOSE", {
+    time: end.toISOString(),
+    day,
+  });
 
   return end;
 }
 
 // =========================================
-// 最後に確定した週の金曜クローズ
+// WEEKLY
 // =========================================
 function getLastWeeklyClose(base = new Date()) {
   const end = getLastDailyClose(base);
-  const day = end.getUTCDay(); // 0-6
+  const day = end.getUTCDay();
 
-  // 金曜(5)との差分
   const diff = day - 5;
 
   const friday = new Date(end);
   friday.setUTCDate(end.getUTCDate() - diff);
 
+  // 🔥 ここだけ追加
+  friday.setUTCDate(friday.getUTCDate() - 7);
+
+  log("DATA", "WEEKLY CLOSE", {
+    base: end.toISOString(),
+    friday: friday.toISOString(),
+    day,
+    diff,
+  });
+
   return friday;
 }
-
 // =========================================
-// 基準時間（FX仕様：確定足ベース）
+// MAIN
 // =========================================
 export function getBaseTime(timeframe: Timeframe) {
 
-  // =====================
-  // DAILY（最後の確定1日）
-  // =====================
   if (timeframe === "daily") {
     const end = getLastDailyClose();
 
     const start = new Date(end);
     start.setUTCDate(start.getUTCDate() - 1);
 
+    log("RESULT", "DAILY RANGE", {
+      start: start.toISOString(),
+      end: end.toISOString(),
+    });
+
     return { start, end };
   }
 
-  // =====================
-  // WEEKLY（最後に確定した週）
-  // =====================
   if (timeframe === "weekly") {
     const end = getLastWeeklyClose();
 
     const start = new Date(end);
-    start.setUTCDate(start.getUTCDate() - 5); // 日曜21:00
+    start.setUTCDate(start.getUTCDate() - 5);
+
+    log("RESULT", "WEEKLY RANGE", {
+      start: start.toISOString(),
+      end: end.toISOString(),
+    });
 
     return { start, end };
   }

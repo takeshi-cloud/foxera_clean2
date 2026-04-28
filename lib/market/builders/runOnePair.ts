@@ -13,13 +13,33 @@ export const runOnePair = async (MARKET: string) => {
     errors: [],
   };
 
-  const log = (msg: string, data?: any) => {
-    trace.flow.push({
+  // 🔥 後方互換あり（ここだけ修正）
+  const log = (a: string, b?: any, c?: any) => {
+    let type = "FLOW";
+    let msg = "";
+    let data = null;
+
+    // 新形式対応
+    if (c !== undefined) {
+      type = a;
+      msg = b;
+      data = c;
+    } else {
+      // 旧形式そのまま通す
+      msg = a;
+      data = b ?? null;
+    }
+
+    const entry = {
+      type,
       step: msg,
-      data: data ?? null,
+      data,
       time: new Date().toISOString(),
-    });
-    console.log("🧭", msg, data ?? "");
+    };
+
+    trace.flow.push(entry);
+
+    console.log(`[${type}] ${msg}`, data ?? "");
   };
 
   try {
@@ -180,9 +200,6 @@ export const runOnePair = async (MARKET: string) => {
     return {
       step: isFresh ? "cache" : "success",
 
-      // =========================================
-      // 🔥 DEBUG拡張（ロジック非変更）
-      // =========================================
       summary: {
         price: {
           value: priceData.price,
@@ -195,7 +212,6 @@ export const runOnePair = async (MARKET: string) => {
           time: new Date().toISOString(),
         },
 
-        // 🔥 PIVOT中身出す（重要）
         pivot: {
           daily: pivot.daily,
           weekly: pivot.weekly,
@@ -203,16 +219,20 @@ export const runOnePair = async (MARKET: string) => {
           weeklyDate: weeklyStr,
         },
 
-        // 🔥 OHLC（もし乗っていれば）
         ohlc: {
           daily: pivot.daily?.ohlc ?? null,
           weekly: pivot.weekly?.ohlc ?? null,
         },
 
-        // 🔥 追加：完全デバッグ用（壊さない）
-        debug: {
-          pivotRaw: pivot,
-        },
+       debug: {
+  pivotRaw: pivot,
+
+  // 🔥 これ追加（これが本体）
+  ny: pivot?.debug?.ny ?? null,
+  raw: pivot?.debug?.raw ?? null,
+  baseTime: pivot?.debug?.baseTime ?? null,
+   weeklyCheck: pivot?.debug?.weeklyCheck ?? null,
+}
       },
 
       trace,
