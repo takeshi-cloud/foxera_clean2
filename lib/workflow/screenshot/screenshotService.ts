@@ -16,6 +16,11 @@ export const saveScreenshot = async ({
 }) => {
   const today = new Date().toISOString().slice(0, 10);
 
+  console.log("📸 SAVE (legacy)", {
+    symbol,
+    path,
+  });
+
   const { error } = await supabase.from("screenshots").insert({
     symbol,
     date: today,
@@ -54,11 +59,13 @@ export const fetchRecentScreenshots = async (
     return [];
   }
 
+  console.log("📦 FETCH RESULT", data);
+
   return data ?? [];
 };
 
 // =========================================
-// 📸 保存（UPLOAD用：修正版）
+// 📸 保存（UPLOAD用：検証付き完全版）
 // =========================================
 export const saveScreenshotV2 = async ({
   userId,
@@ -76,14 +83,14 @@ export const saveScreenshotV2 = async ({
   notes?: string;
 }) => {
   // =============================
-  // 🔥 日付の正規化（最重要）
+  // 日付
   // =============================
   const safeDate = date
-    ? date.slice(0, 10) // ← ISOでも絶対YYYY-MM-DDにする
+    ? date.slice(0, 10)
     : new Date().toISOString().slice(0, 10);
 
   // =============================
-  // 🔥 pathの検証（超重要）
+  // path検証
   // =============================
   if (!path.includes("/")) {
     console.error("❌ path壊れてる:", path);
@@ -91,13 +98,55 @@ export const saveScreenshotV2 = async ({
   }
 
   // =============================
-  // 🔥 保存
+  // 🔥 保存前ログ（最重要）
+  // =============================
+  console.log("📸 SAVE V2", {
+    userId,
+    symbol,
+    path,
+    safeDate,
+  });
+
+  // =============================
+  // 🔥 Storage存在チェック
+  // =============================
+  try {
+    const parts = path.split("/");
+    const fileName = parts.pop();
+    const folder = parts.join("/");
+
+    const { data: list, error: listError } = await supabase.storage
+      .from("images")
+      .list(folder);
+
+    if (listError) {
+      console.error("❌ STORAGE LIST ERROR", listError);
+    } else {
+      const exists = list?.some((f) => f.name === fileName);
+
+      console.log("📂 STORAGE CHECK", {
+        folder,
+        fileName,
+        exists,
+        files: list,
+      });
+
+      if (!exists) {
+        console.warn("⚠️ FILE NOT FOUND IN STORAGE", path);
+      }
+    }
+  } catch (e) {
+    console.error("❌ STORAGE CHECK CRASH", e);
+  }
+
+  // =============================
+  // 保存
   // =============================
   const { error } = await supabase.from("screenshots").insert({
     user_id: userId,
     symbol,
-    date: safeDate, // ← 絶対YYYY-MM-DD
-    path,           // ← 必ず userId/filename.png
+    date: safeDate,
+    path,
     ...(type && { type }),
     ...(notes && { notes }),
   });

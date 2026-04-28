@@ -130,6 +130,7 @@ export default function ImageViewer({ src }: { src: string }) {
         height: "100%",
         overflow: "hidden",
         position: "relative",
+        objectFit:"contain",
         background: "#000",
         cursor: isDragging ? "grabbing" : "grab",
       }}
@@ -159,7 +160,7 @@ export default function ImageViewer({ src }: { src: string }) {
   src={src}
   onLoad={(e) => {
     const img = e.currentTarget;
-    const container = img.parentElement;
+    const container = e.currentTarget.parentElement;
     if (!container) return;
 
     const cw = container.clientWidth;
@@ -174,7 +175,7 @@ export default function ImageViewer({ src }: { src: string }) {
     });
 
     // 🔥 cover（余白ゼロ）
-    const fit = Math.max(
+    const fit = Math.min(
       cw / naturalW,
       ch / naturalH
     );
@@ -197,6 +198,7 @@ export default function ImageViewer({ src }: { src: string }) {
     position: "absolute",
     top: 0,
     left: 0,
+    objectFit:"contain",
 
     transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
     transformOrigin: "top left",

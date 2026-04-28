@@ -30,7 +30,7 @@ export const ScreenshotPanel = ({ activePair }: { activePair: string }) => {
   }, [activePair]);
 
   const getUrl = (path: string) =>
-    supabase.storage.from("images").getPublicUrl(path).data.publicUrl;
+    supabase.storage.from("screenshots").getPublicUrl(path).data.publicUrl;
 
   // 🔥 note保存
   const handleSaveNote = async () => {
@@ -45,18 +45,30 @@ export const ScreenshotPanel = ({ activePair }: { activePair: string }) => {
   return (
     <>
       <div
-        style={{
-          width: "100%",
-          height: "100%",
-          background: "#000",
-          position: "relative",
-        }}
-      >
+  style={{
+    width: "100%",
+    height: "100%",
+    background: "#000",
+    position: "relative",
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  
+
+    paddingTop: "0px", // ← ここで調整
+  }}
+>
         {/* 画像 */}
         {shot ? (
          <ImageViewer src={getUrl(shot.path)} />
         ) : (
-          <div style={{ color: "#666" }}>No Screenshot</div>
+          <div style={{ 
+             width: "100%",
+    height: "100%",
+            color: "#666",
+              objectFit:"contain",
+          
+          }}>No Screenshot</div>
         )}
 
         {/* ヘッダー */}
