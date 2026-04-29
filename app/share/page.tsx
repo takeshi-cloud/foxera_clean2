@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/infra/supabase";
 
@@ -11,7 +11,10 @@ const PAIRS = [
   "EURGBP"
 ];
 
-export default function SharePage() {
+// ===============================
+// 中身（UIそのまま）
+// ===============================
+function SharePageInner() {
   const params = useSearchParams();
 
   const today = new Date().toISOString().slice(0, 10);
@@ -19,22 +22,35 @@ export default function SharePage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [date, setDate] = useState(today);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   // ===============================
-  // 🔥 shareから来た画像をセット
+  // 🔥 share画像復元（ここが重要）
   // ===============================
   useEffect(() => {
     const img = params.get("img");
-    if (img) {
-      setPreviewUrl(img);
-    }
+    if (!img) return;
+
+    setPreviewUrl(img);
+
+    (async () => {
+      try {
+        const res = await fetch(img);
+        const blob = await res.blob();
+        const f = new File([blob], "share.png", { type: blob.type });
+        setFile(f);
+      } catch (e) {
+        console.error("❌ file復元失敗", e);
+      }
+    })();
   }, [params]);
 
   // ===============================
-  // 📋 ペースト（PC用）
+  // 📋 ペースト（PC）
   // ===============================
   const handlePasteFile = (file: File) => {
+    setFile(file);
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
   };
@@ -60,17 +76,31 @@ export default function SharePage() {
   }, []);
 
   // ===============================
-  // 💾 保存
+  // 💾 保存（Storage + DB）
   // ===============================
   const handleSave = async () => {
-    if (!selected || !previewUrl) return;
+    if (!selected || !file) return;
 
     try {
       setLoading(true);
 
+      const fileName = `${selected}_${Date.now()}.png`;
+
+      // 🔥 Storage保存
+      const { error } = await supabase.storage
+        .from("screenshots")
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data } = supabase.storage
+        .from("screenshots")
+        .getPublicUrl(fileName);
+
+      // 🔥 DB保存
       await supabase.from("screenshots").insert({
         symbol: selected,
-        path: previewUrl,
+        path: data.publicUrl,
         date,
       });
 
@@ -122,13 +152,13 @@ export default function SharePage() {
 
           <button
             onClick={handleSave}
-            disabled={!selected || !previewUrl}
+            disabled={!selected || !file}
             style={{
               padding: "8px 12px",
-              background: selected && previewUrl ? "#ff00cc" : "#444",
+              background: selected && file ? "#ff00cc" : "#444",
               border: "none",
               color: "white",
-              cursor: selected && previewUrl ? "pointer" : "not-allowed",
+              cursor: selected && file ? "pointer" : "not-allowed",
             }}
           >
             保存
@@ -180,7 +210,7 @@ export default function SharePage() {
           })}
         </div>
 
-        {/* ペーストエリア */}
+        {/* ペースト */}
         <div
           style={{
             marginTop: 10,
@@ -209,9 +239,11 @@ export default function SharePage() {
         >
           {previewUrl ? (
             <>
-              {/* ×解除 */}
               <div
-                onClick={() => setPreviewUrl(null)}
+                onClick={() => {
+                  setPreviewUrl(null);
+                  setFile(null);
+                }}
                 style={{
                   position: "absolute",
                   top: 6,
@@ -248,5 +280,16 @@ export default function SharePage() {
         )}
       </div>
     </div>
+  );
+}
+
+// ===============================
+// Suspenseラッパー（←これだけ追加）
+// ===============================
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <SharePageInner />
+    </Suspense>
   );
 }
