@@ -1,58 +1,45 @@
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function POST(req: Request) {
   console.log("🔥 SHARE HIT START");
 
   try {
-    console.log("👉 method:", req.method);
-    console.log("👉 url:", req.url);
-
-    let formData: FormData | null = null;
-
-    try {
-      formData = await req.formData();
-      console.log("✅ formData取得成功");
-    } catch (err) {
-      console.error("❌ formData取得失敗", err);
-    }
-
-    if (!formData) {
-      console.log("⚠️ formDataなし");
-      
-      // 👇 絶対URLでリダイレクト
-      return new Response(null, {
-        status: 303,
-        headers: {
-          Location: "https://foxera-clean2.vercel.app/share",
-        },
-      });
-    }
-
-    const entries = Array.from(formData.entries());
-
-    console.log("👉 formData entries count:", entries.length);
-
-    for (const [key, value] of entries) {
-      if (value instanceof File) {
-        console.log("📸 FILE FOUND", value.name);
-      } else {
-        console.log("📝 TEXT FIELD:", key, value);
-      }
-    }
-
+    const formData = await req.formData();
     const file = formData.get("file");
 
-    if (!file) {
-      console.log("⚠️ fileなし");
-    } else if (file instanceof File) {
-      console.log("✅ file取得成功:", file.name);
+    if (!(file instanceof File)) {
+      return new Response("NO_FILE", { status: 400 });
     }
 
-    console.log("🔥 SHARE HIT END");
+    const fileName = `share_${Date.now()}.png`;
 
-    // 👇 ここが今回の本命（絶対URL）
+    const { error } = await supabase.storage
+      .from("screenshots")
+      .upload(fileName, file);
+
+    if (error) {
+      console.error(error);
+      return new Response("UPLOAD_ERROR", { status: 500 });
+    }
+
+    const { data } = supabase.storage
+      .from("screenshots")
+      .getPublicUrl(fileName);
+
+    const url = data.publicUrl;
+
+    console.log("✅ uploaded:", url);
+
+    // 👇 URL付きで /shareへ
     return new Response(null, {
       status: 303,
       headers: {
-        Location: "https://foxera-clean2.vercel.app/share",
+        Location: `https://foxera-clean2.vercel.app/share?img=${encodeURIComponent(url)}`,
       },
     });
 

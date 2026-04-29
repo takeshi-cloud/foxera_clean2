@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/infra/supabase";
 
 const PAIRS = [
   "XAUUSD","USDJPY","GBPJPY","EURJPY",
@@ -10,17 +12,31 @@ const PAIRS = [
 ];
 
 export default function SharePage() {
+  const params = useSearchParams();
+
   const today = new Date().toISOString().slice(0, 10);
 
   const [selected, setSelected] = useState<string | null>(null);
   const [date, setDate] = useState(today);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // ===============================
-  // 📋 ペースト（PC / iPad）
+  // 🔥 shareから来た画像をセット
+  // ===============================
+  useEffect(() => {
+    const img = params.get("img");
+    if (img) {
+      setPreviewUrl(img);
+    }
+  }, [params]);
+
+  // ===============================
+  // 📋 ペースト（PC用）
   // ===============================
   const handlePasteFile = (file: File) => {
-    setPreviewUrl(URL.createObjectURL(file));
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
   };
 
   useEffect(() => {
@@ -43,14 +59,27 @@ export default function SharePage() {
     return () => window.removeEventListener("paste", handlePaste);
   }, []);
 
+  // ===============================
+  // 💾 保存
+  // ===============================
   const handleSave = async () => {
     if (!selected || !previewUrl) return;
 
-    console.log("保存", { selected, date });
+    try {
+      setLoading(true);
 
-    // TODO: Supabase保存
+      await supabase.from("screenshots").insert({
+        symbol: selected,
+        path: previewUrl,
+        date,
+      });
 
-    window.location.href = "/";
+      window.location.href = "/";
+    } catch (e) {
+      console.error("❌ 保存エラー", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -151,37 +180,20 @@ export default function SharePage() {
           })}
         </div>
 
-        {/* ================= 長押しペーストエリア ================= */}
+        {/* ペーストエリア */}
         <div
-  contentEditable
-  suppressContentEditableWarning
-  onPaste={(e) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    for (const item of items) {
-      if (item.type.startsWith("image")) {
-        const file = item.getAsFile();
-        if (file) {
-          handlePasteFile(file);
-          return;
-        }
-      }
-    }
-  }}
-  style={{
-    marginTop: 10,
-    padding: "14px",
-    border: "1px dashed #555",
-    borderRadius: 6,
-    textAlign: "center",
-    color: "#888",
-    fontSize: 13,
-    userSelect: "text",
-  }}
->
-  📋 ここを長押し → ペースト
-</div>
+          style={{
+            marginTop: 10,
+            padding: "14px",
+            border: "1px dashed #555",
+            borderRadius: 6,
+            textAlign: "center",
+            color: "#888",
+            fontSize: 13,
+          }}
+        >
+          📋 Ctrl+V / 長押しペースト
+        </div>
 
         {/* プレビュー */}
         <div
@@ -224,10 +236,16 @@ export default function SharePage() {
             </>
           ) : (
             <span style={{ opacity: 0.4 }}>
-              プレビュー（Ctrl+V / 長押し）
+              プレビュー（Ctrl+V / Share）
             </span>
           )}
         </div>
+
+        {loading && (
+          <div style={{ marginTop: 8, fontSize: 12 }}>
+            保存中...
+          </div>
+        )}
       </div>
     </div>
   );
