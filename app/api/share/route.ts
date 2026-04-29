@@ -2,16 +2,9 @@ export async function POST(req: Request) {
   console.log("🔥 SHARE HIT START");
 
   try {
-    // =========================
-    // 基本情報
-    // =========================
     console.log("👉 method:", req.method);
     console.log("👉 url:", req.url);
-    console.log("👉 headers:", Object.fromEntries(req.headers.entries()));
 
-    // =========================
-    // formData取得
-    // =========================
     let formData: FormData | null = null;
 
     try {
@@ -23,50 +16,33 @@ export async function POST(req: Request) {
 
     if (!formData) {
       console.log("⚠️ formDataなし");
-
-      const redirectUrl = new URL("/share", req.url);
-      return Response.redirect(redirectUrl, 303);
+      return new Response("OK", { status: 200 });
     }
 
-    // =========================
-    // 中身チェック
-    // =========================
     const entries = Array.from(formData.entries());
 
     console.log("👉 formData entries count:", entries.length);
 
     for (const [key, value] of entries) {
       if (value instanceof File) {
-        console.log("📸 FILE FOUND");
-        console.log("   name:", value.name);
-        console.log("   type:", value.type);
-        console.log("   size:", value.size);
+        console.log("📸 FILE FOUND", value.name);
       } else {
         console.log("📝 TEXT FIELD:", key, value);
       }
     }
 
-    // =========================
-    // file取得（従来ロジック）
-    // =========================
     const file = formData.get("file");
 
     if (!file) {
-      console.log("⚠️ file keyで取得できず");
+      console.log("⚠️ fileなし");
     } else if (file instanceof File) {
       console.log("✅ file取得成功:", file.name);
-    } else {
-      console.log("⚠️ fileはFileじゃない:", file);
     }
 
     console.log("🔥 SHARE HIT END");
 
-    // =========================
-    // ✅ 最重要：絶対URLでリダイレクト
-    // =========================
-    const redirectUrl = new URL("/share", req.url);
-
-    return Response.redirect(redirectUrl, 303);
+    // 👇 redirectやめる
+    return new Response("OK", { status: 200 });
 
   } catch (e) {
     console.error("❌ SHARE ERROR", e);
