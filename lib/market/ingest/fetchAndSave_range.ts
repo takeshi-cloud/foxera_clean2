@@ -62,38 +62,46 @@ export async function fetchAndSave_range(
     return;
   }
 
-  // =========================================
-  // 🔥 フォーマット
-  // =========================================
-  const formatted = data
-    .map((d: any) => {
-      if (!d.timestamp_utc) return null;
+ // =========================================
+// 🔥 フォーマット
+// =========================================
+const OFFSET_MS = -10 * 60 * 60 * 1000;
 
-      const utc = new Date(d.timestamp_utc);
-      if (isNaN(utc.getTime())) return null;
+const formatted = data
+  .map((d: any) => {
+    if (!d.timestamp_utc) return null;
 
-      return {
-        symbol, // ← DBはkeyのまま（重要）
-        open: Number(d.open),
-        high: Number(d.high),
-        low: Number(d.low),
-        close: Number(d.close),
-        timestamp_utc: utc.toISOString(),
-      };
-    })
-    .filter(Boolean);
+    const raw = new Date(d.timestamp_utc);
+    if (isNaN(raw.getTime())) return null;
 
-  if (!formatted.length) {
-    console.warn("❌ no valid rows after format");
-    return;
-  }
+    const corrected = new Date(raw.getTime() + OFFSET_MS);
 
-  console.log("💾 SAVE COUNT:", formatted.length);
-  console.log(
-    "💾 SAVE SAMPLE:",
-    formatted[formatted.length - 1]
-  );
+    return {
+      symbol, // ← DBはkeyのまま（重要）
+      open: Number(d.open),
+      high: Number(d.high),
+      low: Number(d.low),
+      close: Number(d.close),
 
+      // 🔥 追加
+      timestamp_raw: raw.toISOString(),
+
+      // 🔥 差し替え
+      timestamp_utc: corrected.toISOString(),
+    };
+  })
+  .filter(Boolean);
+
+if (!formatted.length) {
+  console.warn("❌ no valid rows after format");
+  return;
+}
+
+console.log("💾 SAVE COUNT:", formatted.length);
+console.log(
+  "💾 SAVE SAMPLE:",
+  formatted[formatted.length - 1]
+);
   // =========================================
   // 🔥 保存
   // =========================================

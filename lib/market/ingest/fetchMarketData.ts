@@ -48,15 +48,13 @@ export async function fetchOHLC(
   );
 
   // 🔥 ここが修正ポイント（超重要）
-  if (from) {
-    const start = `${from}T00:00:00`;
-    url.searchParams.append("start_date", start);
-  }
+ if (from) {
+  url.searchParams.append("start_date", from);
+}
 
-  if (to) {
-    const end = `${to}T23:59:59`;
-    url.searchParams.append("end_date", end);
-  }
+if (to) {
+  url.searchParams.append("end_date", to);
+}
 
   console.log("🌐 FETCH URL:", url.toString());
 

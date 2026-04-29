@@ -110,7 +110,7 @@ export default function ImageViewer({ src }: { src: string }) {
 
     setPos({
       x: (cw - imgSize.w * fit) / 2,
-      y: (ch - imgSize.h * fit) / 2 -20,
+      y: (ch - imgSize.h * fit) / 2,
     });
   };
 
@@ -130,7 +130,7 @@ export default function ImageViewer({ src }: { src: string }) {
         height: "100%",
         overflow: "hidden",
         position: "relative",
-        objectFit:"contain",
+        objectFit:"cover",
         background: "#000",
         cursor: isDragging ? "grabbing" : "grab",
       }}
@@ -158,6 +158,7 @@ export default function ImageViewer({ src }: { src: string }) {
 
 <img
   src={src}
+ 
   onLoad={(e) => {
     const img = e.currentTarget;
     const container = e.currentTarget.parentElement;
@@ -188,7 +189,7 @@ export default function ImageViewer({ src }: { src: string }) {
 
     // 🔥 完全中央（cover対応）
 
-    const offsetY =-20; // ←好きなだけ（10〜30くらい）
+    const offsetY =20; // ←好きなだけ（10〜30くらい）
     setPos({
       x: (cw - imgW) / 2,
       y: (ch - imgH) / 2 + offsetY,

@@ -75,6 +75,26 @@ export const pivotBuilder = async (
 
   const hasDailyBars = !!bars.prevDaily;
   const hasWeeklyBars = !!bars.prevWeekly;
+  // =========================================
+// 🔥 VALIDATION（ここに入れる）
+// =========================================
+const DAILY_REQUIRED = 24;
+const WEEKLY_REQUIRED = 120;
+
+const dailyCount = bars.prevDaily?.count ?? 0;
+const weeklyCount = bars.prevWeekly?.count ?? 0;
+
+// Daily不足
+if (dailyCount < DAILY_REQUIRED) {
+  log("ERROR", "DAILY不足", { dailyCount });
+  bars.prevDaily = null;
+}
+
+// Weekly不足
+if (weeklyCount < WEEKLY_REQUIRED) {
+  log("ERROR", "WEEKLY不足", { weeklyCount });
+  bars.prevWeekly = null;
+}
 
   // =========================================
   // 🔥 ① 元データ（既存）

@@ -61,27 +61,46 @@ export async function fetchAndSave(
   // =========================================
   // ③ 取得範囲
   // =========================================
-  let start = from;
-  let end = to;
+ let start = from;
+let end = to;
 
-  if (from && to) {
-    const startBase = new Date(from);
-    const endBase = new Date(to);
+if (from && to) {
+  const OFFSET_MS = 10 * 60 * 60 * 1000;
 
-    startBase.setDate(startBase.getDate() - 2);
+  const startBase = new Date(from);
+  const endBase = new Date(to);
 
-    if (endBase > now) {
-      endBase.setTime(now.getTime());
-    }
+  // 既存ロジック
+  startBase.setDate(startBase.getDate() - 2);
 
-    start = startBase.toISOString().slice(0, 10);
-    end = endBase.toISOString().slice(0, 10);
-  }
+ 
+
+  // 🔥 ここが核心（+10h）
+ const apiStart = new Date(startBase);
+apiStart.setUTCHours(21, 0, 0, 0);
+apiStart.setTime(apiStart.getTime() + OFFSET_MS);
+  const apiEnd = new Date(endBase);
+apiEnd.setUTCHours(21, 0, 0, 0);
+
+// そこから +10h
+apiEnd.setTime(apiEnd.getTime() + OFFSET_MS);
+
+ start = apiStart.toISOString();
+end   = apiEnd.toISOString();
+}
 
  console.log("📅 fetch mode:", {
   type: "latest",
   outputsize,
 });
+
+console.log("📡 FETCH REQUEST", {
+  requestedFrom: from,
+  requestedTo: to,
+  adjustedFrom: start,
+  adjustedTo: end,
+});
+
 
  // =========================================
 // ④ API取得
@@ -117,6 +136,10 @@ try {
     count: data?.length,
   });
 
+  console.log("📡 FETCH RANGE", {
+  first: data?.[0]?.timestamp_utc,
+  last: data?.[data.length - 1]?.timestamp_utc,
+});
   // 🔥 リクエストとの差分
   console.log("📡 REQUEST vs RESULT", {
     requestedFrom: from,
@@ -157,23 +180,32 @@ if (!data?.length) {
   // =========================================
   // ⑥ 正規化
   // =========================================
-  const formatted = data
-    .map((d: any) => {
-      if (!d.timestamp_utc) return null;
+ const OFFSET_MS = -10 * 60 * 60 * 1000;
 
-      const utc = new Date(d.timestamp_utc);
-      if (isNaN(utc.getTime())) return null;
+const formatted = data
+  .map((d: any) => {
+    if (!d.timestamp_utc) return null;
 
-      return {
-        symbol,
-        open: Number(d.open),
-        high: Number(d.high),
-        low: Number(d.low),
-        close: Number(d.close),
-        timestamp_utc: utc.toISOString(),
-      };
-    })
-    .filter(Boolean);
+    const raw = new Date(d.timestamp_utc);
+    if (isNaN(raw.getTime())) return null;
+
+    const corrected = new Date(raw.getTime() + OFFSET_MS);
+
+    return {
+      symbol,
+      open: Number(d.open),
+      high: Number(d.high),
+      low: Number(d.low),
+      close: Number(d.close),
+
+      // 🔥 追加
+      timestamp_raw: raw.toISOString(),
+
+      // 🔥 ここを差し替え
+      timestamp_utc: corrected.toISOString(),
+    };
+  })
+  .filter(Boolean);
 
   if (!formatted.length) {
     console.warn("❌ no valid rows after format");

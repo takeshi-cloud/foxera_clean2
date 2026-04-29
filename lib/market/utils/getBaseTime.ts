@@ -73,19 +73,20 @@ function getLastWeeklyClose(base = new Date()) {
 export function getBaseTime(timeframe: Timeframe) {
 
   if (timeframe === "daily") {
-    const end = getLastDailyClose();
+  const end = getLastDailyClose();
 
-    const start = new Date(end);
-    start.setUTCDate(start.getUTCDate() - 1);
+ 
 
-    log("RESULT", "DAILY RANGE", {
-      start: start.toISOString(),
-      end: end.toISOString(),
-    });
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - 1);
 
-    return { start, end };
-  }
+  log("RESULT", "DAILY RANGE", {
+    start: start.toISOString(),
+    end: end.toISOString(),
+  });
 
+  return { start, end };
+}
   if (timeframe === "weekly") {
     const end = getLastWeeklyClose();
 
