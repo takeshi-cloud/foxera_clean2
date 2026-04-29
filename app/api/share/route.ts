@@ -5,8 +5,7 @@ export async function POST(req: Request) {
 
     console.log("📸 received:", file?.name);
 
-    // 👇 これが重要（リダイレクト）
-    return Response.redirect("/share", 303);
+    return new Response("OK", { status: 200 });
   } catch (e) {
     console.error(e);
     return new Response("error", { status: 500 });
