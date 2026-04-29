@@ -5,9 +5,20 @@ import { DragDropContext } from "@hello-pangea/dnd";
 
 import { useBoards } from "@/lib/workflow/board/useBoards";
 
-import { LeftPanel } from "./left/panel/LeftPanel";
-import { CenterPanel } from "./center/panels/CenterPanel";
-import { RightPanel } from "./right/panel/RightPanel";
+import dynamic from "next/dynamic";
+
+const LeftPanel = dynamic(
+  () => import("./left/panel/LeftPanel").then(m => m.LeftPanel),
+  { ssr: false }
+);
+const CenterPanel = dynamic(
+  () => import("./center/panels/CenterPanel").then(m => m.CenterPanel),
+  { ssr: false }
+);
+const RightPanel = dynamic(
+  () => import("./right/panel/RightPanel").then(m => m.RightPanel),
+  { ssr: false }
+);
 
 import {
   handleToggleDirection,
