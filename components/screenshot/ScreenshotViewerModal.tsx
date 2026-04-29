@@ -44,8 +44,15 @@ export const ScreenshotViewerModal = ({ open, onClose, symbol }: any) => {
     return () => window.removeEventListener("keydown", handleKey);
   }, [open]);
 
-  const getUrl = (path: string) =>
-  supabase.storage.from("screenshots").getPublicUrl(path).data.publicUrl;
+  const getUrl = (path: string) => {
+  // すでにURLならそのまま
+  if (path.startsWith("http")) return path;
+
+  // ファイル名ならURL生成
+  return supabase.storage
+    .from("screenshots")
+    .getPublicUrl(path).data.publicUrl;
+};
 
   // 日付整形
   const formatDate = (d: string) =>

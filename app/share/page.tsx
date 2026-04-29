@@ -100,7 +100,7 @@ function SharePageInner() {
       // 🔥 DB保存
       await supabase.from("screenshots").insert({
         symbol: selected,
-        path: data.publicUrl,
+        path: fileName,
         date,
       });
 
