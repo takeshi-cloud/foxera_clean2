@@ -1,11 +1,10 @@
 export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
+    // ここで一応受ける（何もしなくてOK）
+    await req.formData();
 
-    console.log("📸 received:", file?.name);
-
-    return new Response("OK", { status: 200 });
+    // 👉 Share画面へ
+    return Response.redirect("/share", 303);
   } catch (e) {
     console.error(e);
     return new Response("error", { status: 500 });
