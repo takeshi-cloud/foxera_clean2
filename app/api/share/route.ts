@@ -4,7 +4,7 @@ export async function POST(req: Request) {
     await req.formData();
 
     // 👉 Share画面へ
-    return Response.redirect("/share", 303);
+    return Response.redirect("/api/share", 303);
   } catch (e) {
     console.error(e);
     return new Response("error", { status: 500 });
