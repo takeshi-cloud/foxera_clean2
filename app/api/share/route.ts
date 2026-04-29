@@ -16,7 +16,14 @@ export async function POST(req: Request) {
 
     if (!formData) {
       console.log("⚠️ formDataなし");
-      return new Response("OK", { status: 200 });
+      
+      // 👇 絶対URLでリダイレクト
+      return new Response(null, {
+        status: 303,
+        headers: {
+          Location: "https://foxera-clean2.vercel.app/share",
+        },
+      });
     }
 
     const entries = Array.from(formData.entries());
@@ -41,8 +48,13 @@ export async function POST(req: Request) {
 
     console.log("🔥 SHARE HIT END");
 
-    // 👇 redirectやめる
-    return new Response("OK", { status: 200 });
+    // 👇 ここが今回の本命（絶対URL）
+    return new Response(null, {
+      status: 303,
+      headers: {
+        Location: "https://foxera-clean2.vercel.app/share",
+      },
+    });
 
   } catch (e) {
     console.error("❌ SHARE ERROR", e);
