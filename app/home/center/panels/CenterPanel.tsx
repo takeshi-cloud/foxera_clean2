@@ -5,6 +5,7 @@ import { BoardCard } from "../cards/BoardCard";
 import { useState, useEffect } from "react";
 import { Header } from "./Header";
 import { Row } from "./Row";
+import { QuickUploadModal } from "@/components/screenshot/QuickUploadModal";
 
 import {
   PHASES,
@@ -97,6 +98,8 @@ export const CenterPanel = ({
       x === "Trigger" ? 0 : x === "Pullback" ? 1 : 2;
     return p(a.phase) - p(b.phase);
   };
+
+  const [openQuickUpload, setOpenQuickUpload] = useState(false);
 
   // =============================
   // 🔥 ここだけ調整値
@@ -200,6 +203,24 @@ export const CenterPanel = ({
             SHORT
           </button>
         </div>
+
+<div
+  onClick={() => setOpenQuickUpload(true)}
+  style={{
+    marginLeft: "26px",
+    padding: "4px 14px",
+    borderRadius: "8px",
+    background: "#0e5be9", // ← 青系（未使用）
+    color: "white",
+    fontSize: "14px",
+    fontWeight: 600,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  }}
+>
+  Screenshots Upload
+</div>
+
       </div>
 
       <div style={{ display: "flex", gap: GAP }}>
@@ -303,6 +324,14 @@ export const CenterPanel = ({
           );
         })}
       </div>
+
+   {/* ================= Quick Upload ================= */}
+      <QuickUploadModal
+        open={openQuickUpload}
+        onClose={() => setOpenQuickUpload(false)}
+      />
+
+
 
     </div>
   );

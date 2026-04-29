@@ -58,21 +58,26 @@ export const ScreenshotUploadModal = ({ open, onClose, symbol }: any) => {
   // 📋 Ctrl + V
   // =====================================
   useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      if (!open) return;
+  const handlePaste = (e: ClipboardEvent) => {
+    if (!open) return;
 
-      const item = e.clipboardData?.items?.[0];
-      if (!item) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
 
+    for (const item of items) {
       if (item.type.startsWith("image")) {
         const file = item.getAsFile();
-        if (file) handleFile(file);
+        if (file) {
+          handleFile(file);
+          return;
+        }
       }
-    };
+    }
+  };
 
-    window.addEventListener("paste", handlePaste);
-    return () => window.removeEventListener("paste", handlePaste);
-  }, [open]);
+  document.addEventListener("paste", handlePaste);
+  return () => document.removeEventListener("paste", handlePaste);
+}, [open]);
 
   // =====================================
   // ⌨ ESCで閉じる
@@ -90,6 +95,13 @@ export const ScreenshotUploadModal = ({ open, onClose, symbol }: any) => {
   }, [open]);
 
   if (!open) return null;
+
+
+
+
+
+
+  
 
   return (
     <div
