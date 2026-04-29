@@ -203,36 +203,34 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
         />
 
         {/* ================= 長押しペースト ================= */}
-        <div
-          contentEditable
-          suppressContentEditableWarning
-          onPaste={(e) => {
-            const items = e.clipboardData?.items;
-            if (!items) return;
+ <div
+  onPaste={(e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
 
-            for (const item of items) {
-              if (item.type.startsWith("image")) {
-                const f = item.getAsFile();
-                if (f) {
-                  handleFile(f);
-                  return;
-                }
-              }
-            }
-          }}
-          style={{
-            marginTop: 10,
-            padding: "14px",
-            border: "1px dashed #555",
-            borderRadius: 6,
-            textAlign: "center",
-            color: "#888",
-            fontSize: 13,
-            userSelect: "text",
-          }}
-        >
-          📋 長押し → ペースト
-        </div>
+    for (const item of items) {
+      if (item.type.startsWith("image")) {
+        const f = item.getAsFile();
+        if (f) {
+          handleFile(f);
+          return;
+        }
+      }
+    }
+  }}
+  style={{
+    marginTop: 10,
+    padding: "14px",
+    border: "1px dashed #555",
+    borderRadius: 6,
+    textAlign: "center",
+    color: "#888",
+    fontSize: 13,
+    WebkitUserSelect: "none",
+  }}
+>
+  📋 長押し → ペースト
+</div>
 
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.7 }}>
           ドロップ / Ctrl+V / 長押しペースト OK
