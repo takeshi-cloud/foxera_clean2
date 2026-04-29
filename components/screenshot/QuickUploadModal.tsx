@@ -18,7 +18,6 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
   const [selected, setSelected] = useState<string | null>(null);
   const [date, setDate] = useState(today);
   const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // ===============================
@@ -26,12 +25,6 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
   // ===============================
   const handleFile = (f: File) => {
     setFile(f);
-    setPreviewUrl(URL.createObjectURL(f));
-  };
-
-  const clearFile = () => {
-    setFile(null);
-    setPreviewUrl(null);
   };
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,21 +64,6 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
   }, [open]);
 
   // ===============================
-  // ⌨ ESCで閉じる
-  // ===============================
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-
-    if (open) {
-      window.addEventListener("keydown", handleKey);
-    }
-
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [open]);
-
-  // ===============================
   // 💾 保存
   // ===============================
   const handleSave = async () => {
@@ -106,7 +84,6 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
         date,
       });
 
-      clearFile();
       onClose();
     } catch (e) {
       console.error("❌ upload error", e);
@@ -217,72 +194,52 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
           })}
         </div>
 
-        {/* ファイル選択（iPad対応） */}
+  {/* 🔥 ファイル選択 */}
         <input
           ref={inputRef}
           type="file"
           accept="image/*"
           onChange={onSelectFile}
-          style={{ display: "none" }}
         />
 
+        {/* ================= 長押しペースト ================= */}
         <div
-          onClick={() => inputRef.current?.click()}
+          contentEditable
+          suppressContentEditableWarning
+          onPaste={(e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            for (const item of items) {
+              if (item.type.startsWith("image")) {
+                const f = item.getAsFile();
+                if (f) {
+                  handleFile(f);
+                  return;
+                }
+              }
+            }
+          }}
           style={{
             marginTop: 10,
-            padding: "10px",
-            background: "#1e293b",
-            textAlign: "center",
+            padding: "14px",
+            border: "1px dashed #555",
             borderRadius: 6,
-            cursor: "pointer",
+            textAlign: "center",
+            color: "#888",
+            fontSize: 13,
+            userSelect: "text",
           }}
         >
-          📸 画像を選択
+          📋 長押し → ペースト
         </div>
 
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.7 }}>
           ドロップ / Ctrl+V / 長押しペースト OK
         </div>
 
-        {/* プレビュー */}
-        {previewUrl && (
-          <div
-            style={{
-              marginTop: 10,
-              position: "relative",
-              border: "1px solid #333",
-              background: "#000",
-            }}
-          >
-            {/* × */}
-            <div
-              onClick={clearFile}
-              style={{
-                position: "absolute",
-                top: 6,
-                right: 6,
-                background: "rgba(0,0,0,0.6)",
-                padding: "2px 6px",
-                cursor: "pointer",
-                fontSize: 12,
-              }}
-            >
-              ✕
-            </div>
-
-            <img
-              src={previewUrl}
-              style={{
-                width: "100%",
-                maxHeight: 220,
-                objectFit: "contain",
-              }}
-            />
-          </div>
-        )}
-
         {/* 状態 */}
-        {file && !previewUrl && (
+        {file && (
           <div style={{ marginTop: 8, fontSize: 12 }}>
             ✔ 画像セット済み
           </div>

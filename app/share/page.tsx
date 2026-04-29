@@ -16,14 +16,35 @@ export default function SharePage() {
   const [date, setDate] = useState(today);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // 🔥 共有ファイル取得（後でroute連携）
+  // ===============================
+  // 📋 ペースト（PC / iPad）
+  // ===============================
+  const handlePasteFile = (file: File) => {
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
   useEffect(() => {
-    // 仮：後でここにfileセット
-    // setPreviewUrl(...)
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.startsWith("image")) {
+          const file = item.getAsFile();
+          if (file) {
+            handlePasteFile(file);
+            return;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
   }, []);
 
   const handleSave = async () => {
-    if (!selected) return;
+    if (!selected || !previewUrl) return;
 
     console.log("保存", { selected, date });
 
@@ -48,7 +69,7 @@ export default function SharePage() {
       <div
         style={{
           width: "100%",
-          maxWidth: 480, // ← スマホ幅固定
+          maxWidth: 480,
           padding: 16,
           color: "white",
           display: "flex",
@@ -72,13 +93,13 @@ export default function SharePage() {
 
           <button
             onClick={handleSave}
-            disabled={!selected}
+            disabled={!selected || !previewUrl}
             style={{
               padding: "8px 12px",
-              background: selected ? "#ff00cc" : "#444",
+              background: selected && previewUrl ? "#ff00cc" : "#444",
               border: "none",
               color: "white",
-              cursor: selected ? "pointer" : "not-allowed",
+              cursor: selected && previewUrl ? "pointer" : "not-allowed",
             }}
           >
             保存
@@ -91,7 +112,6 @@ export default function SharePage() {
               background: "#333",
               border: "none",
               color: "white",
-              cursor: "pointer",
             }}
           >
             中止
@@ -104,7 +124,7 @@ export default function SharePage() {
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
             gap: 8,
-            marginBottom: 16,
+            marginBottom: 12,
           }}
         >
           {PAIRS.map((p) => {
@@ -131,6 +151,38 @@ export default function SharePage() {
           })}
         </div>
 
+        {/* ================= 長押しペーストエリア ================= */}
+        <div
+  contentEditable
+  suppressContentEditableWarning
+  onPaste={(e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image")) {
+        const file = item.getAsFile();
+        if (file) {
+          handlePasteFile(file);
+          return;
+        }
+      }
+    }
+  }}
+  style={{
+    marginTop: 10,
+    padding: "14px",
+    border: "1px dashed #555",
+    borderRadius: 6,
+    textAlign: "center",
+    color: "#888",
+    fontSize: 13,
+    userSelect: "text",
+  }}
+>
+  📋 ここを長押し → ペースト
+</div>
+
         {/* プレビュー */}
         <div
           style={{
@@ -140,20 +192,40 @@ export default function SharePage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            overflow: "hidden",
+            position: "relative",
           }}
         >
           {previewUrl ? (
-            <img
-              src={previewUrl}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-              }}
-            />
+            <>
+              {/* ×解除 */}
+              <div
+                onClick={() => setPreviewUrl(null)}
+                style={{
+                  position: "absolute",
+                  top: 6,
+                  right: 6,
+                  background: "rgba(0,0,0,0.6)",
+                  padding: "2px 6px",
+                  cursor: "pointer",
+                  fontSize: 12,
+                }}
+              >
+                ✕
+              </div>
+
+              <img
+                src={previewUrl}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            </>
           ) : (
-            <span style={{ opacity: 0.4 }}>プレビュー</span>
+            <span style={{ opacity: 0.4 }}>
+              プレビュー（Ctrl+V / 長押し）
+            </span>
           )}
         </div>
       </div>
