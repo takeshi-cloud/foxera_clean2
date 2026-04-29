@@ -23,7 +23,9 @@ export async function POST(req: Request) {
 
     if (!formData) {
       console.log("⚠️ formDataなし");
-      return new Response("NO_FORMDATA", { status: 200 });
+
+      const redirectUrl = new URL("/share", req.url);
+      return Response.redirect(redirectUrl, 303);
     }
 
     // =========================
@@ -59,7 +61,12 @@ export async function POST(req: Request) {
 
     console.log("🔥 SHARE HIT END");
 
-    return new Response("OK", { status: 200 });
+    // =========================
+    // ✅ 最重要：絶対URLでリダイレクト
+    // =========================
+    const redirectUrl = new URL("/share", req.url);
+
+    return Response.redirect(redirectUrl, 303);
 
   } catch (e) {
     console.error("❌ SHARE ERROR", e);
