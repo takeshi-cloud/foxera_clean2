@@ -7,22 +7,22 @@ export async function GET(
 ) {
   try {
     const pair =
-      req.nextUrl.searchParams.get(
-        "pair"
-      ) || "USD/JPY";
+      req.nextUrl.searchParams.get("pair") || "USD/JPY";
+
+    // 🔥 これを追加
+    const now = new Date();
 
     const result =
-      await buildMAStructure(pair);
+      await buildMAStructure(pair, now);
 
     return NextResponse.json({
       pair,
+      now: now.toISOString(), // ついでに返すと便利
       result,
     });
+
   } catch (error) {
-    console.error(
-      "❌ MA Debug Error:",
-      error
-    );
+    console.error("❌ MA Debug Error:", error);
 
     return NextResponse.json(
       { error: "failed" },
