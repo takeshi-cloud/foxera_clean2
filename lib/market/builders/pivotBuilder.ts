@@ -78,8 +78,8 @@ export const pivotBuilder = async (
   // =========================================
 // 🔥 VALIDATION（ここに入れる）
 // =========================================
-const DAILY_REQUIRED = 24;
-const WEEKLY_REQUIRED = 120;
+const DAILY_REQUIRED = 20;
+const WEEKLY_REQUIRED = 110;
 
 const dailyCount = bars.prevDaily?.count ?? 0;
 const weeklyCount = bars.prevWeekly?.count ?? 0;

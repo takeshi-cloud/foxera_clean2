@@ -160,6 +160,57 @@ if (!data?.length) {
   });
   return;
 }
+
+// =========================================
+// 🔥 異常値フィルタ（ここに追加）
+// =========================================
+const clean = data.filter((curr: any, i: number) => {
+  if (!curr) return false;
+
+  // 数値化
+  const high = Number(curr.high);
+  const low = Number(curr.low);
+  const close = Number(curr.close);
+
+  if (!high || !low || !close) return false;
+
+  // ① 明らかなバグ
+  if (low <= 0) return false;
+
+  // ② 前足比較
+  if (i === 0) return true;
+
+  const prev = data[i - 1];
+  const prevClose = Number(prev.close);
+
+  if (!prevClose) return false;
+
+  const ratioHigh = high / prevClose;
+  const ratioLow  = low  / prevClose;
+
+  // ±20%以上は異常
+  if (ratioHigh > 1.2 || ratioLow < 0.8) {
+    console.warn("⚠️ 異常値除外", {
+      time: curr.timestamp_utc,
+      high,
+      low,
+      prevClose,
+    });
+    return false;
+  }
+
+  return true;
+});
+
+data = clean;
+
+
+
+
+
+
+
+
   // =========================================
   // ⑤ テーブル
   // =========================================

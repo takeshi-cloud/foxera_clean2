@@ -91,15 +91,7 @@ if (to) {
   console.log("✅ values count:", data.values.length);
 
   return data.values.map((d: any, i: number) => {
-    if (i < 10) {
-      console.log("CHECK", {
-        datetime: d.datetime,
-        open: d.open,
-        high: d.high,
-        low: d.low,
-        close: d.close,
-      });
-    }
+    
 
     // 🔥 UTCとして固定解釈
     const utc = new Date(d.datetime + "Z");

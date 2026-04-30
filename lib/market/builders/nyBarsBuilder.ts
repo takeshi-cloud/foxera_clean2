@@ -98,7 +98,51 @@ export const nyBarsBuilder = async (pair: string) => {
   };
 };
 
-    const prevDaily = build(dailyData);
+// =========================================
+// 🔥 異常値除去（ここに追加）
+// =========================================
+const clean = (data: any[]) => {
+  return data.filter((b, i, arr) => {
+    if (!b) return false;
+
+    const high = Number(b.high);
+    const low = Number(b.low);
+    const close = Number(b.close);
+
+    // ① 完全ゴミ（保存されてても排除）
+    if (!high || !low || !close) return false;
+    if (low <= 0) return false;
+
+    // ② 前足比較（スパイク検出）
+    if (i === 0) return true;
+
+    const prev = arr[i - 1];
+    const prevClose = Number(prev.close);
+    if (!prevClose) return false;
+
+    const ratioHigh = high / prevClose;
+    const ratioLow  = low / prevClose;
+
+    // ±20%超えたら異常
+    if (ratioHigh > 1.2 || ratioLow < 0.8) {
+      console.warn("🔥 REMOVE BAD BAR", {
+        time: b.timestamp_utc,
+        high,
+        low,
+        prevClose,
+      });
+      return false;
+    }
+
+    return true;
+  });
+};
+
+// 👇これを追加
+const dailyClean = clean(dailyData);
+const weeklyClean = clean(weeklyData);
+
+    const prevDaily = build(dailyClean);
 
     log("DATA", "DAILY SUMMARY", {
       range: {
@@ -110,7 +154,7 @@ export const nyBarsBuilder = async (pair: string) => {
       low: dailyExt?.low,
     });
 
-    const prevWeekly = build(weeklyData);
+    const prevWeekly = build(weeklyClean);
 
     log("DATA", "WEEKLY SUMMARY", {
       range: {
