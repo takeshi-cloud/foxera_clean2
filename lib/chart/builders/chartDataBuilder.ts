@@ -84,11 +84,32 @@ export const chartDataBuilder = async (
     );
   }
 
-  // =========================================
-  // 異常値補正（★追加ロジック）
-  // =========================================
- const sanitizeBars = (rows) => {
+  const sanitizeBars = (rows) => {
   if (!rows || rows.length === 0) return rows;
+
+  console.log("=== SANITIZE START ===");
+
+  // =========================================
+  // ① ソート前チェック
+  // =========================================
+  console.log(
+    "ORDER BEFORE",
+    rows.slice(0, 5).map(r => r.timestamp_utc)
+  );
+
+  // =========================================
+  // ② ソート（検証用に強制）
+  // =========================================
+  rows.sort(
+    (a, b) =>
+      new Date(a.timestamp_utc).getTime() -
+      new Date(b.timestamp_utc).getTime()
+  );
+
+  console.log(
+    "ORDER AFTER",
+    rows.slice(0, 5).map(r => r.timestamp_utc)
+  );
 
   const result = [];
 
@@ -100,16 +121,39 @@ export const chartDataBuilder = async (
     const low = Number(cur.low);
     const close = Number(cur.close);
 
-    const prev = result[i - 1];
+    // ❌ 今のコード
+    const prev_bug = result[i - 1];
 
+    // ✅ 正しいprev
+    const prev = result[result.length - 1];
+
+    // =========================================
+    // ③ prev比較ログ（核心）
+    // =========================================
+    if (i < 5) {
+      console.log("PREV CHECK", {
+        i,
+        prev_bug: prev_bug?.close,
+        prev_correct: prev?.close,
+      });
+    }
+
+    // 初回
     if (!prev) {
-      result.push(cur);
+      result.push({
+        ...cur,
+        open,
+        high,
+        low,
+        close,
+      });
       continue;
     }
 
     const prevClose = Number(prev.close);
 
-    // ★ここが本質修正
+    const diff = Math.abs(close - prevClose) / prevClose;
+
     const isInvalid =
       !open ||
       !high ||
@@ -119,40 +163,82 @@ export const chartDataBuilder = async (
       high < low ||
       close > high ||
       close < low ||
-      Math.abs(close - prevClose) / prevClose > 0.2;
+      diff > 0.2;
 
-    if (isInvalid) {
-      console.warn("⚠️ FIX", {
+     // =========================================
+    // ④ 異常検知ログ
+    // =========================================
+    if (diff > 0.2) {
+      console.log("🚨 DIFF DETECTED", {
         time: cur.timestamp_utc,
-        open,
+        prevClose,
+        close,
+        diff,
+      });
+    }
+
+    const prevHigh = Number(prev.high);
+    const prevLow = Number(prev.low);
+
+    // 🔥 個別チェック
+    const highInvalid =
+      !high || Math.abs(high - prevClose) / prevClose > 0.2;
+
+    const lowInvalid =
+      !low || Math.abs(low - prevClose) / prevClose > 0.2;
+
+    const closeInvalid =
+      !close || Math.abs(close - prevClose) / prevClose > 0.2;
+
+    const fixedHigh = highInvalid ? prevHigh : high;
+    const fixedLow = lowInvalid ? prevLow : low;
+    const fixedClose = closeInvalid ? prevClose : close;
+
+    if (highInvalid || lowInvalid || closeInvalid) {
+      console.warn("⚠️ PARTIAL FIX", {
+        time: cur.timestamp_utc,
         high,
         low,
         close,
+        fixedHigh,
+        fixedLow,
+        fixedClose,
       });
-
-      result.push({
-        ...cur,
-        open: prevClose,
-        high: prevClose,
-        low: prevClose,
-        close: prevClose,
-      });
-
-      continue;
     }
 
     result.push({
       ...cur,
-      open,
-      high,
-      low,
-      close,
+      open: open || prevClose,
+      high: fixedHigh,
+      low: fixedLow,
+      close: fixedClose,
     });
   }
 
+  // =========================================
+  // ⑤ 最終チェック（奈落検出）
+  // =========================================
+  for (let i = 1; i < result.length; i++) {
+    const prev = result[i - 1];
+    const cur = result[i];
+
+    const diff =
+      Math.abs(cur.close - prev.close) / prev.close;
+
+    if (diff > 0.2) {
+      console.error("❌ STILL BROKEN AFTER SANITIZE", {
+        time: cur.timestamp_utc,
+        prev: prev.close,
+        cur: cur.close,
+        diff,
+      });
+    }
+  }
+
+  console.log("=== SANITIZE END ===");
+
   return result;
 };
-
   // =========================================
   // 再取得
   // =========================================
