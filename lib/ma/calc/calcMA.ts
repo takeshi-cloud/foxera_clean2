@@ -17,6 +17,7 @@ export function calcMA(
   bars: Bar[],
   period: number = MA_PERIOD
 ): MAResult {
+  const confirmed = bars.slice(0, -1);
   const required = period + 1;
 
   if (bars.length < required) {

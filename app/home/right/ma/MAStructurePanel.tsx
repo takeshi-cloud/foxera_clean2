@@ -36,6 +36,26 @@ export function MAStructurePanel({
     };
   }, []);
 
+  // =========================================
+  // 🔥 追加：並び替え
+  // =========================================
+  const sortedRows = [...rows].sort((a, b) => {
+    const dirOrder: Record<string, number> = {
+      UP: 0,
+      DOWN: 1,
+      OTHER: 2,
+    };
+
+    const d1 = dirOrder[a.direction] ?? 2;
+    const d2 = dirOrder[b.direction] ?? 2;
+
+    if (d1 !== d2) {
+      return d1 - d2;
+    }
+
+    return (b.stars || 0) - (a.stars || 0);
+  });
+
   return (
     <div
       style={{
@@ -48,7 +68,6 @@ export function MAStructurePanel({
         overflowY: "auto",
       }}
     >
-
       <div
         style={{
           display: "flex",
@@ -56,11 +75,12 @@ export function MAStructurePanel({
           gap: 3,
         }}
       >
-        {rows.map((row) => (
+        {/* 🔥 ここ変更 */}
+        {sortedRows.map((row) => (
           <MAListRow
             key={row.pair}
             row={row}
-            activePair={activePair} // ← ここだけ追加
+            activePair={activePair}
           />
         ))}
       </div>
@@ -75,9 +95,8 @@ function MAListRow({
   row: any;
   activePair: string;
 }) {
-  // 🔥 normalize（/問題対策）
- const normalize = (p: any) =>
-  String(p ?? "").replace("/", "");
+  const normalize = (p: any) =>
+    String(p ?? "").replace("/", "");
 
   const isActive =
     normalize(row.pair) === normalize(activePair);
@@ -115,135 +134,117 @@ function MAListRow({
 
   const ordered = [...row.structure_order].reverse();
 
-return (
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "72px 1fr 160px",
-      alignItems: "center",
-      gap: 10,
-
-      background: "#020617",
-
-      borderRadius: 6,
-      padding: "4px 10px",
-      fontSize: 16,
-
-      border: isActive
-        ? "2px solid #ff00cc"
-        : "1px solid #1e293b",
-
-      boxShadow: isActive
-        ? "0 0 0 2px #ff00cc, 0 0 16px #ff00cc"
-        : "none",
-
-      transform: isActive
-        ? "scale(1.01)"
-        : "scale(1)",
-
-      zIndex: isActive ? 10 : 1,
-
-      transition: "all 0.2s ease",
-    }}
-  >
-    {/* ペア */}
-    <div
-      style={{
-        fontWeight: "bold",
-        color: isActive ? "#ff00cc" : "white",
-      }}
-    >
-      {row.pair}
-    </div>
-
-    {/* 構造 */}
+  return (
     <div
       style={{
         display: "flex",
-        flexWrap: "wrap",
-        gap: 4,
         alignItems: "center",
+        gap: 6,
+        padding: "2px 4px",
+        fontSize: 17,
+
+        background: "#020617",
+        borderRadius: 6,
+
+        border: isActive
+          ? "2px solid #ff00cc"
+          : "1px solid #1e293b",
+
+        boxShadow: isActive
+          ? "0 0 0 2px #ff00cc, 0 0 16px #ff00cc"
+          : "none",
+
+        transform: isActive ? "scale(1.01)" : "scale(1)",
+        zIndex: isActive ? 10 : 1,
       }}
     >
-      {ordered.map((item: string, index: number) => {
-        if (item === "PRICE") {
+      {/* ペア */}
+      <div
+        style={{
+          minWidth: 70,
+          fontWeight: "bold",
+          color: isActive ? "#ff00cc" : "white",
+        }}
+      >
+        {row.pair}
+      </div>
+
+      {/* 構造 */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexWrap: "nowrap",
+          gap: 10,
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {ordered.map((item: string, index: number) => {
+          if (item === "PRICE") {
+            return (
+              <span key={item} style={{ color: "#60a5fa", fontWeight: "bold" }}>
+                PRICE{index < ordered.length - 1 && " <"}
+              </span>
+            );
+          }
+
           return (
             <span
               key={item}
               style={{
-                color: "#60a5fa",
-                fontWeight: "bold",
+                color: "#e2e8f0",
               }}
             >
-              PRICE
+              {item}
+              <span
+                style={{
+                  color:
+                    slopeMap[item] === "⇧"
+                      ? "#4ade80"
+                      : "#f87171",
+                }}
+              >
+                {" "}
+                {slopeMap[item]}
+              </span>
               {index < ordered.length - 1 && " <"}
             </span>
           );
-        }
+        })}
+      </div>
 
-        return (
-          <span key={item} style={{ color: "white" }}>
-            {item}
-            <span
-              style={{
-                color:
-                  slopeMap[item] === "⇧"
-                    ? "#4ade80"
-                    : "#f87171",
-                fontWeight: "bold",
-              }}
-            >
-              {" "}
-              {slopeMap[item]}
-            </span>
-            {index < ordered.length - 1 && " <"}
+      {/* 状態 */}
+      {row.direction !== "OTHER" && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "20px 24px 70px",
+            alignItems: "center",
+            marginLeft: 1,
+          }}
+        >
+          <span
+            style={{
+              color:
+                row.direction === "UP"
+                  ? "#22c55e"
+                  : "#ef4444",
+              fontWeight: "bold",
+            }}
+          >
+            {row.direction === "UP" ? "⤴" : "⤵"}
           </span>
-        );
-      })}
-    </div>
 
-    {/* 状態（追加部分） */}
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        gap: 6,
-        fontSize: 13,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {/* 方向 */}
-      {row.direction === "UP" && (
-        <span style={{ color: "#22c55e", fontWeight: "bold" }}>
-          🟢
-        </span>
-      )}
-      {row.direction === "DOWN" && (
-        <span style={{ color: "#ef4444", fontWeight: "bold" }}>
-          🔴
-        </span>
-      )}
-      {row.direction === "OTHER" && (
-        <span style={{ color: "#94a3b8" }}>
-          ⚪
-        </span>
-      )}
+          <span>
+            {row.phase === "TREND" ? "🚀" : "↩️"}
+          </span>
 
-      {/* PHASE */}
-      {row.direction !== "OTHER" && (
-        <span>
-          {row.phase === "TREND" ? "🚀" : "↩️"}
-        </span>
-      )}
-
-      {/* ⭐ */}
-      {row.direction !== "OTHER" && (
-        <span style={{ color: "#facc15" }}>
-          {"★".repeat(row.stars || 0)}
-        </span>
+          <span style={{ color: "#facc15" }}>
+            {"★".repeat(row.stars || 0)}
+          </span>
+        </div>
       )}
     </div>
-  </div>
-);
+  );
 }

@@ -23,7 +23,6 @@ export const chartDataBuilder = async (
 
     await fetchAndSave_range(symbol, tf, start, end);
 
-    // 🔥 修正：即取得やめて retry
     let retry = 0;
     while (retry < 5) {
       rows = await getChartOHLC(
@@ -53,7 +52,6 @@ export const chartDataBuilder = async (
   const firstDate = first.timestamp_utc.slice(0, 10);
   const lastDate = last.timestamp_utc.slice(0, 10);
 
-  // 先頭不足
   if (firstDate > start) {
     console.log(
       "⚠️ missing head:",
@@ -70,7 +68,6 @@ export const chartDataBuilder = async (
     );
   }
 
-  // 末尾不足
   if (lastDate < end) {
     console.log(
       "⚠️ missing tail:",
@@ -88,7 +85,76 @@ export const chartDataBuilder = async (
   }
 
   // =========================================
-  // 再取得（ここも同じ修正）
+  // 異常値補正（★追加ロジック）
+  // =========================================
+ const sanitizeBars = (rows) => {
+  if (!rows || rows.length === 0) return rows;
+
+  const result = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const cur = rows[i];
+
+    const open = Number(cur.open);
+    const high = Number(cur.high);
+    const low = Number(cur.low);
+    const close = Number(cur.close);
+
+    const prev = result[i - 1];
+
+    if (!prev) {
+      result.push(cur);
+      continue;
+    }
+
+    const prevClose = Number(prev.close);
+
+    // ★ここが本質修正
+    const isInvalid =
+      !open ||
+      !high ||
+      !low ||
+      !close ||
+      low <= 0 ||
+      high < low ||
+      close > high ||
+      close < low ||
+      Math.abs(close - prevClose) / prevClose > 0.2;
+
+    if (isInvalid) {
+      console.warn("⚠️ FIX", {
+        time: cur.timestamp_utc,
+        open,
+        high,
+        low,
+        close,
+      });
+
+      result.push({
+        ...cur,
+        open: prevClose,
+        high: prevClose,
+        low: prevClose,
+        close: prevClose,
+      });
+
+      continue;
+    }
+
+    result.push({
+      ...cur,
+      open,
+      high,
+      low,
+      close,
+    });
+  }
+
+  return result;
+};
+
+  // =========================================
+  // 再取得
   // =========================================
   let retry = 0;
 
@@ -108,10 +174,13 @@ export const chartDataBuilder = async (
     retry++;
   }
 
-  console.log(
-    "📊 final chart rows:",
-    rows?.length
-  );
+  console.log("📊 final chart rows:", rows?.length);
 
-  return buildChartSeries(rows);
+  // ★ここだけ変更（最重要）
+  const cleaned = sanitizeBars(rows);
+  console.log(
+  "LOW CHECK",
+  cleaned.find(r => r.low === 0)
+);
+  return buildChartSeries(cleaned);
 };

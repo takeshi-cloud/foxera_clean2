@@ -151,8 +151,8 @@ try {
 } catch (e) {
   console.error("❌ fetchOHLC failed:", e);
   return;
-}
-
+} 
+//
 if (!data?.length) {
   console.warn("⚠️ no data fetched:", {
     symbol,
@@ -161,53 +161,90 @@ if (!data?.length) {
   return;
 }
 
+/// =========================================
+// 🔥 異常値補正（完全版）
 // =========================================
-// 🔥 異常値フィルタ（ここに追加）
-// =========================================
-const clean = data.filter((curr: any, i: number) => {
-  if (!curr) return false;
+const normalizeBars = (rows) => {
+  const result = [];
 
-  // 数値化
-  const high = Number(curr.high);
-  const low = Number(curr.low);
-  const close = Number(curr.close);
+  for (let i = 0; i < rows.length; i++) {
+    const cur = rows[i];
+    if (!cur) continue;
 
-  if (!high || !low || !close) return false;
+    const open = Number(cur.open);
+    const high = Number(cur.high);
+    const low = Number(cur.low);
+    const close = Number(cur.close);
 
-  // ① 明らかなバグ
-  if (low <= 0) return false;
+    // =========================
+    // 最初の1本
+    // =========================
+    if (result.length === 0) {
+      // 異常ならスキップ
+      if (
+        open <= 0 ||
+        high <= 0 ||
+        low <= 0 ||
+        close <= 0 ||
+        high < low
+      ) {
+        console.warn("⚠️ skip first invalid", cur.timestamp_utc);
+        continue;
+      }
 
-  // ② 前足比較
-  if (i === 0) return true;
+      result.push({
+        ...cur,
+        open,
+        high,
+        low,
+        close,
+      });
+      continue;
+    }
 
-  const prev = data[i - 1];
-  const prevClose = Number(prev.close);
+    // =========================
+    // 通常判定
+    // =========================
+    const prev = result[result.length - 1];
+    const prevClose = Number(prev.close);
 
-  if (!prevClose) return false;
+    const isInvalid =
+      open <= 0 ||
+      high <= 0 ||
+      low <= 0 ||
+      close <= 0 ||
+      high < low ||
+      close > high ||
+      close < low ||
+      Math.abs(close - prevClose) / prevClose > 0.2;
 
-  const ratioHigh = high / prevClose;
-  const ratioLow  = low  / prevClose;
+    if (isInvalid) {
+      console.warn("⚠️ 補正", cur.timestamp_utc);
 
-  // ±20%以上は異常
-  if (ratioHigh > 1.2 || ratioLow < 0.8) {
-    console.warn("⚠️ 異常値除外", {
-      time: curr.timestamp_utc,
+      result.push({
+        ...cur,
+        open: prevClose,
+        high: prevClose,
+        low: prevClose,
+        close: prevClose,
+      });
+      continue;
+    }
+
+    result.push({
+      ...cur,
+      open,
       high,
       low,
-      prevClose,
+      close,
     });
-    return false;
   }
 
-  return true;
-});
+  return result;
+};
 
-data = clean;
-
-
-
-
-
+// ★ここだけ（重要）
+data = normalizeBars(data);
 
 
 

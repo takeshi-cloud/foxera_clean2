@@ -35,7 +35,7 @@ export const RightPanel = ({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "55% 45%",
+            gridTemplateColumns: "50% 50%",
             gap: 5,
             flexShrink: 0,
           }}
@@ -50,7 +50,7 @@ export const RightPanel = ({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "55% 45%",
+            gridTemplateColumns: "50% 50%",
             gap: 5,
             flex: "0 0 45%",
             minHeight: 500,

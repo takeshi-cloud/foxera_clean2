@@ -115,8 +115,13 @@ export async function buildMAStructure(
 const signal = analyzeMASignal({
   price,
   ma15: ma15.now,
-  ma1h: ma1h.now,
-  ma4h: ma4h.now,
+
+  ma1h_now: ma1h.now,
+  ma1h_prev: ma1h.prev,
+
+  ma4h_now: ma4h.now,
+  ma4h_prev: ma4h.prev,
+
   structure_order: structureOrder,
 });
 
@@ -124,7 +129,10 @@ const signal = analyzeMASignal({
     pair,
     ma15_now: ma15.now,
     ma1h_now: ma1h.now,
-    ma4h_now: ma4h.now,
+ma1h_prev: ma1h.prev,
+
+ma4h_now: ma4h.now,
+ma4h_prev: ma4h.prev,
     structure: structureOrder,
   });
 

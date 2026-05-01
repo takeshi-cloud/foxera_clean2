@@ -48,7 +48,10 @@ export const ScreenshotPanel = ({ activePair }: { activePair: string }) => {
   style={{
     width: "100%",
     height: "100%",
-    background: "#000",
+    background: "#0f172a",
+border: "1px solid #334155",
+borderRadius: 12,
+padding: 8,
     position: "relative",
     overflow: "hidden",
     alignItems: "center",
