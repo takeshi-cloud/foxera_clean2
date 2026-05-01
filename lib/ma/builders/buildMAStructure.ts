@@ -2,6 +2,8 @@ import { maBarsBuilder } from "./maBarsBuilder";
 import { calcMA } from "../calc/calcMA";
 import { sortMAStructure } from "../calc/sortMAStructure";
 import { MA_PERIOD } from "@/lib/constants/markets";
+import { getBaseTime_MA } from "@/lib/ma/utils/getBaseTime_MA";
+import { analyzeMASignal } from "../calc/analyzeMASignal";
 
 export async function buildMAStructure(
   pair: string,
@@ -11,42 +13,75 @@ export async function buildMAStructure(
   console.log("📊 buildMAStructure:", pair);
   console.log("========================");
 
-  const {
-    bars15m,
-    bars1h,
-    bars4h,
-  } = await maBarsBuilder(pair, inputDate);
+  // =========================================
+  // baseTime
+  // =========================================
+  const base15 = getBaseTime_MA(inputDate, "15m");
+  const base1h = getBaseTime_MA(inputDate, "1h");
+  const base4h = getBaseTime_MA(inputDate, "4h");
+
+  console.log("🕒 BASE TIMES", {
+    base15: base15.toISOString(),
+    base1h: base1h.toISOString(),
+    base4h: base4h.toISOString(),
+  });
+
+  const { bars15m, bars1h, bars4h } =
+    await maBarsBuilder(pair, inputDate);
+
+  console.log("📦 BAR COUNT (ALL)", {
+    bars15m: bars15m.length,
+    bars1h: bars1h.length,
+    bars4h: bars4h.length,
+  });
 
   // =========================================
-  // 🔥 MAに使うウィンドウ
+  // 最低本数チェック
+  // =========================================
+  const MINIMUM = 19;
+
+  if (bars15m.length < MINIMUM)
+    throw new Error("❌ 15m不足（19未満）");
+
+  if (bars1h.length < MINIMUM)
+    throw new Error("❌ 1h不足（19未満）");
+
+  if (bars4h.length < MINIMUM)
+    throw new Error("❌ 4h不足（19未満）");
+
+  // =========================================
+  // MA用ウィンドウ
   // =========================================
   const window15 = bars15m.slice(-(MA_PERIOD + 1));
   const window1h = bars1h.slice(-(MA_PERIOD + 1));
   const window4h = bars4h.slice(-(MA_PERIOD + 1));
 
   // =========================================
-  // 🔥 使用データログ（最重要）
+  // 使用データログ
   // =========================================
-  console.log("📊 MA SOURCE 15m",
-    window15.map(b => ({
+  console.log("📊 USED BARS 15m", {
+    count: window15.length,
+    data: window15.map((b) => ({
       time: b.timestamp_utc,
       close: b.close,
-    }))
-  );
+    })),
+  });
 
-  console.log("📊 MA SOURCE 1h",
-    window1h.map(b => ({
+  console.log("📊 USED BARS 1h", {
+    count: window1h.length,
+    data: window1h.map((b) => ({
       time: b.timestamp_utc,
       close: b.close,
-    }))
-  );
+    })),
+  });
 
-  console.log("📊 MA SOURCE 4h",
-    window4h.map(b => ({
+  console.log("📊 USED BARS 4h", {
+    count: window4h.length,
+    data: window4h.map((b) => ({
       time: b.timestamp_utc,
       close: b.close,
-    }))
-  );
+    })),
+  });
 
   // =========================================
   // MA計算
@@ -56,9 +91,9 @@ export async function buildMAStructure(
   const ma4h = calcMA(window4h);
 
   // =========================================
-  // 最新価格
+  // 価格
   // =========================================
-  const lastBar = window15[window15.length - 1];
+  const lastBar = window15.at(-1);
   const price = lastBar?.close;
 
   console.log("💰 PRICE", {
@@ -70,17 +105,21 @@ export async function buildMAStructure(
   // =========================================
   // structure
   // =========================================
-  const structureOrder =
-    sortMAStructure({
-      price,
-      ma15: ma15.now,
-      ma1h: ma1h.now,
-      ma4h: ma4h.now,
-    });
+  const structureOrder = sortMAStructure({
+    price,
+    ma15: ma15.now,
+    ma1h: ma1h.now,
+    ma4h: ma4h.now,
+  });
 
-  // =========================================
-  // FINAL SUMMARY（重要）
-  // =========================================
+const signal = analyzeMASignal({
+  price,
+  ma15: ma15.now,
+  ma1h: ma1h.now,
+  ma4h: ma4h.now,
+  structure_order: structureOrder,
+});
+
   console.log("✅ MA RESULT", {
     pair,
     ma15_now: ma15.now,
@@ -89,9 +128,40 @@ export async function buildMAStructure(
     structure: structureOrder,
   });
 
+  // =========================================
+  // DEBUG（コンソールのみ）
+  // =========================================
+  console.log("🧪 MA DEBUG", {
+    bars_used: MA_PERIOD,
+    bar_15_now: window15.at(-1)?.timestamp_utc,
+    bar_1h_now: window1h.at(-1)?.timestamp_utc,
+    bar_4h_now: window4h.at(-1)?.timestamp_utc,
+    range_15m: {
+      from: window15[0]?.timestamp_utc,
+      to: window15.at(-1)?.timestamp_utc,
+    },
+    range_1h: {
+      from: window1h[0]?.timestamp_utc,
+      to: window1h.at(-1)?.timestamp_utc,
+    },
+    range_4h: {
+      from: window4h[0]?.timestamp_utc,
+      to: window4h.at(-1)?.timestamp_utc,
+    },
+  });
+
+
+
+
+  // =========================================
+  // RETURN（DB用）
+  // =========================================
   return {
     pair,
-    base_time: new Date().toISOString(),
+    base_15m: base15.toISOString(),
+    base_1h: base1h.toISOString(),
+    base_4h: base4h.toISOString(),
+    base_time: base4h.toISOString(),
 
     price,
 
@@ -105,29 +175,8 @@ export async function buildMAStructure(
     ma_prev_4h: ma4h.prev,
 
     structure_order: structureOrder,
-
-    // =========================================
-    // DEBUG（軽量版）
-    // =========================================
-    debug: {
-      bars_used: MA_PERIOD,
-
-      bar_15_now: window15.at(-1)?.timestamp_utc,
-      bar_1h_now: window1h.at(-1)?.timestamp_utc,
-      bar_4h_now: window4h.at(-1)?.timestamp_utc,
-
-      range_15m: {
-        from: window15[0]?.timestamp_utc,
-        to: window15.at(-1)?.timestamp_utc,
-      },
-      range_1h: {
-        from: window1h[0]?.timestamp_utc,
-        to: window1h.at(-1)?.timestamp_utc,
-      },
-      range_4h: {
-        from: window4h[0]?.timestamp_utc,
-        to: window4h.at(-1)?.timestamp_utc,
-      },
-    },
+     direction: signal.direction,
+  phase: signal.phase,
+  stars: signal.stars,
   };
 }

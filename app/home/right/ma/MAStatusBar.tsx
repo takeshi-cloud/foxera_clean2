@@ -64,7 +64,7 @@ export const MAStatusBar = () => {
           await res.json();
 
         // 🔥 これ追加（最重要）
-        setData(json);
+        setData(json.rows || []);
 
         const hasError =
           Array.isArray(json) &&

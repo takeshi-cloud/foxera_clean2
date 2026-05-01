@@ -20,7 +20,7 @@ export const getLatestOHLC = async (
     .select("*")
     .eq("symbol", symbol)
     .order("timestamp_utc", { ascending: false }) // 🔥 最新から取る
-    .limit(1000); // 🔥 必ず上限つける
+    .limit(250); // 🔥 必ず上限つける
 
   if (error) throw error;
 

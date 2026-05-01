@@ -2,13 +2,13 @@ import { supabase } from "@/lib/infra/supabase";
 
 type SaveMAStructureParams = {
   pair: string;
-  base_time: string;
-
+   base_time: string;
+  base_15m: string;
+  base_1h: string;
+  base_4h: string;
   price: number;
-
   ma_now_15: number;
   ma_prev_15: number;
-
   ma_now_1h: number;
   ma_prev_1h: number;
 
@@ -19,63 +19,22 @@ type SaveMAStructureParams = {
 };
 
 // =========================================
-// MA構造保存
+// MA構造保存（最新のみ）
 // =========================================
 export async function saveMAStructure(
   params: SaveMAStructureParams
 ) {
-  const {
-    pair,
-    base_time,
-
-    price,
-
-    ma_now_15,
-    ma_prev_15,
-
-    ma_now_1h,
-    ma_prev_1h,
-
-    ma_now_4h,
-    ma_prev_4h,
-
-    structure_order,
-  } = params;
-
   const { data, error } =
     await supabase
-      .from("ma_structure_history")
-      .upsert(
-        {
-          pair,
-          base_time,
-
-          price,
-
-          ma_now_15,
-          ma_prev_15,
-
-          ma_now_1h,
-          ma_prev_1h,
-
-          ma_now_4h,
-          ma_prev_4h,
-
-          structure_order,
-        },
-        {
-          onConflict:
-            "pair,base_time",
-        }
-      )
+      .from("ma_structure_history") // ←変更
+      .upsert(params, {
+        onConflict: "pair", // ←ここが核心
+      })
       .select()
       .single();
 
   if (error) {
-    console.error(
-      "❌ saveMAStructure error:",
-      error
-    );
+    console.error("❌ saveMAStructure error:", error);
     throw error;
   }
 

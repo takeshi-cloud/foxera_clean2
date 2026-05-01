@@ -81,7 +81,19 @@ export function getBaseTime_MA(
   tf: TF
 ): Date {
   const floored = floorToTF(input, tf);
-  const adjusted = adjustWeekend(floored);
+
+  // 🔥 ここ追加（超重要）
+  const tfMsMap: Record<TF, number> = {
+    "15m": 15 * 60 * 1000,
+    "1h": 60 * 60 * 1000,
+    "4h": 4 * 60 * 60 * 1000,
+  };
+
+  const confirmed = new Date(
+    floored.getTime() - tfMsMap[tf]
+  );
+
+  const adjusted = adjustWeekend(confirmed);
 
   console.log("⏱ getBaseTime_MA", {
     input: input.toISOString(),
@@ -91,7 +103,6 @@ export function getBaseTime_MA(
 
   return adjusted;
 }
-
 // =============================
 // ④ テスト（必要なら使う）
 // =============================

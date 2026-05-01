@@ -83,17 +83,23 @@ const build4H_NY = (bars1h: OHLC[]) => {
     grouped[key].push(bar);
   }
 
-  return Object.entries(grouped)
-    .map(([timestamp, bars]) => ({
+ return Object.entries(grouped)
+  .map(([timestamp, bars]) => {
+    // 🔥 4本揃ってない4Hは捨てる
+    if (bars.length < 4) return null;
+
+    return {
       timestamp_utc: timestamp,
       open: bars[0].open,
       high: Math.max(...bars.map((b) => b.high)),
       low: Math.min(...bars.map((b) => b.low)),
       close: bars[bars.length - 1].close,
-    }))
-    .sort((a, b) =>
-      a.timestamp_utc.localeCompare(b.timestamp_utc)
-    );
+    };
+  })
+  .filter((b): b is OHLC => b !== null)
+  .sort((a, b) =>
+    a.timestamp_utc.localeCompare(b.timestamp_utc)
+  );
 };
 
 // =========================================

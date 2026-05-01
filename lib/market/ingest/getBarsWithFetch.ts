@@ -3,6 +3,7 @@
 import { getLatestOHLC } from "./getLatestOHLC";
 import { fetchAndSave } from "./fetchAndSave";
 import { getBaseTime_MA } from "@/lib/ma/utils/getBaseTime_MA";
+import { supabase } from "@/lib/infra/supabase";
 
 // =========================================
 // 共通：昇順ソート
@@ -40,18 +41,31 @@ export async function getBarsWithFetch(
     base: baseTime.toISOString(),
   });
 
-  // =========================================
-  // DB取得
-  // =========================================
-  let bars = await getLatestOHLC(pair, tf);
+ // =========================================
+// DB取得（baseTime基準に変更）
+// =========================================
 
-  bars = sortAsc(bars);
+const extra = 250;
 
-  console.log("📦 DB FETCH", {
-    count: bars.length,
-    first: bars[0]?.timestamp_utc,
-    last: bars[bars.length - 1]?.timestamp_utc,
-  });
+const start = new Date(baseTime);
+
+if (tf === "15m") {
+  start.setMinutes(start.getMinutes() - extra * 15);
+} else if (tf === "1h") {
+  start.setHours(start.getHours() - extra);
+}
+
+const table = tf === "15m" ? "ohlc_15m" : "ohlc_1h";
+
+const { data } = await supabase
+  .from(table)
+  .select("*")
+  .eq("symbol", pair)
+  .gte("timestamp_utc", start.toISOString())
+  .lte("timestamp_utc", baseTime.toISOString())
+  .order("timestamp_utc", { ascending: true });
+
+let bars = data || [];
 
   // =========================================
   // baseTimeでカット
@@ -125,14 +139,25 @@ if (bars.length < required || isTimeMissing) {
     bars = sortAsc(bars);
 
     bars = bars.filter(
-      (b) =>
-        new Date(b.timestamp_utc) <= baseTime
-    );
+  (b) =>
+    new Date(b.timestamp_utc) <= baseTime
+);
 
-    console.log("🔄 AFTER FETCH", {
-      count: bars.length,
-      last: bars[bars.length - 1]?.timestamp_utc,
-    });
+// 👇ここに追加（この位置固定）
+const last = bars[bars.length - 1];
+
+console.log("🔍 DEBUG TIME CHECK", {
+  last_raw: last?.timestamp_utc,
+  last_ms: new Date(last?.timestamp_utc).getTime(),
+
+  base_raw: baseTime.toISOString(),
+  base_ms: baseTime.getTime(),
+
+  diff_hours:
+    (baseTime.getTime() -
+      new Date(last?.timestamp_utc).getTime()) /
+    (1000 * 60 * 60),
+});
   }
 
   // =========================================
