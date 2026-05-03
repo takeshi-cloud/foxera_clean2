@@ -61,7 +61,7 @@ export function MAStructurePanel({
       style={{
         border: "1px solid #334155",
         borderRadius: 8,
-        padding: "5px 10px",
+        padding: "2px 2px",
         background: "#0f172a",
         minHeight: 360,
         maxHeight: 800,
@@ -72,7 +72,7 @@ export function MAStructurePanel({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 3,
+          gap: 1,
         }}
       >
         {/* 🔥 ここ変更 */}
@@ -107,7 +107,7 @@ function MAListRow({
         style={{
           background: "#7f1d1d",
           color: "white",
-          padding: "8px 10px",
+          padding: "8px 5px",
           borderRadius: 6,
           fontSize: 14,
         }}
@@ -139,9 +139,9 @@ function MAListRow({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 6,
-        padding: "2px 4px",
-        fontSize: 17,
+        gap: 2,
+        padding: "2px 2px",
+        fontSize: 13,
 
         background: "#020617",
         borderRadius: 6,

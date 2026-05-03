@@ -137,18 +137,19 @@ export default function HomeClient() {
       <div
         style={{
           display: "flex",
-          minHeight: "100vh",
+          minHeight: "100%",
           background: "#020617",
           overflowX: "auto",
+          width:"100%",
           overflowY: "auto",
         }}
       >
         {/* LEFT */}
         <div
           style={{
-            flex: 1.2,
+            flex: "1.2 1 0%",
             minWidth: 140,
-            maxWidth: 190,
+            maxWidth: 230,
             overflow: "auto",
             opacity: 0.6,
           }}
@@ -167,9 +168,9 @@ export default function HomeClient() {
         {/* CENTER */}
         <div
           style={{
-            flex: 2,
+           flex: "2 1 0%",
             minWidth: 500,
-            maxWidth: 900,
+            maxWidth: 700,
             minHeight: "100%",
             overflowY: "auto",
           }}
@@ -198,8 +199,9 @@ export default function HomeClient() {
         {/* RIGHT */}
         <div
           style={{
-            flex: 1,
-            minWidth: 1200,
+           flex: "1 1 0%",
+minWidth: 900,
+            
             overflow: "flex",
           }}
         >
@@ -209,7 +211,16 @@ export default function HomeClient() {
         </div>
 
         {/* 🔥 時計（完全分離） */}
-        <Clock />
+        <div
+  style={{
+    position: "fixed",
+    bottom: 10,
+    left: 10,
+    zIndex: 9999,
+  }}
+>
+  <Clock />
+</div>
       </div>
     </DragDropContext>
   );

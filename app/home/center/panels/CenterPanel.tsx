@@ -246,7 +246,7 @@ const filteredPairs =
  <div
   style={{
     display: "grid",
-   gridTemplateColumns: "repeat(4, minmax(120px, 1fr))"
+   gridTemplateColumns: "repeat(4, minmax(80px, 1fr))"
   }}
 >
         {phases.map((phase) => {
@@ -305,7 +305,7 @@ const filteredPairs =
  <div
   style={{
     display: "grid",
- gridTemplateColumns: "repeat(4, minmax(120px, 1fr))",
+ gridTemplateColumns: "repeat(4, minmax(80px, 1fr))",
   }}
 >
         {phases.map((phase) => {

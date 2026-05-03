@@ -119,7 +119,7 @@ return (
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-start",
-        gap: 50,
+        gap: 10,
       }}
     >
       <div>

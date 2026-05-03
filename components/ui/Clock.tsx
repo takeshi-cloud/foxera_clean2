@@ -19,5 +19,19 @@ export const Clock = () => {
 
   if (!time) return null; // 初期はSSRと一致させる
 
-  return <div>{time}</div>;
+  return (
+  <div
+    style={{
+      color: "#fff",
+      background: "rgba(0,0,0,0.6)",
+      padding: "6px 10px",
+      borderRadius: 6,
+      fontSize: 14,
+      fontWeight: "bold",
+      boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+    }}
+  >
+    {time}
+  </div>
+);
 };

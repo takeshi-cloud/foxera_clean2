@@ -137,7 +137,7 @@ const getMAIcon = (direction, phase) => {
     >
 
       {/* Pair */}
-      <div style={{ fontWeight: "bold", fontSize: "14px" }}>
+      <div style={{ fontWeight: "bold", fontSize: "13px" }}>
         {card.pair}
       </div>
 

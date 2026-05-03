@@ -82,7 +82,7 @@ export const RadarPanel = ({
       style={{
         border: "1px solid #334155",
         borderRadius: 8,
-        padding: 12,
+        padding: 15,
         background: "#0f172a",
         minHeight: 320,
         display: "flex",

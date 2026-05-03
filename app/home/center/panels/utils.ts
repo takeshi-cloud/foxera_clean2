@@ -2,7 +2,7 @@
 // ===== カラム幅（Header / Row 共通）=====
 // Pair広め・Dir小さめ・Phase固定でズレ防止
 export const COLS =
-  "1.5fr 18px 18px minmax(28px, 0.6fr) minmax(28px, 0.6fr) 16px 30px";
+  "1fr 18px 18px minmax(25px, 0.6fr) minmax(25px, 0.6fr) 16px 28px";
 
 // ===== フェーズカラー =====
 export const getPhaseColor = (phase: string) => {

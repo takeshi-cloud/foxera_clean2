@@ -117,7 +117,7 @@ const CustomLabel = (props: any, activePair: string) => {
               ? labelX - 4
               : labelX - width + 4
           }
-          y={labelY - 12}
+          y={labelY - 10}
           width={width}
           height={height}
           fill="rgba(255,0,204,0.12)"
@@ -132,7 +132,7 @@ const CustomLabel = (props: any, activePair: string) => {
         x={labelX}
         y={labelY}
         fill={isActive ? "#ff00cc" : "white"}
-        fontSize={isActive ? 13 : 12}
+        fontSize={isActive ? 12 : 11}
         fontWeight={isActive ? "bold" : "normal"}
         textAnchor={isRightSide ? "start" : "end"}
       >

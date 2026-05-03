@@ -35,7 +35,7 @@ export const RightPanel = ({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "50% 50%",
+            gridTemplateColumns: "5.5fr 4.5fr",
             gap: 5,
             flexShrink: 0,
           }}
@@ -50,10 +50,10 @@ export const RightPanel = ({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "50% 50%",
+            gridTemplateColumns: "5.5fr 4.5fr",
             gap: 5,
             flex: "0 0 45%",
-            minHeight: 500,
+            minHeight: 450,
             overflow: "visible",
           }}
         >
@@ -67,7 +67,7 @@ export const RightPanel = ({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "50% 50%",
+            gridTemplateColumns: "1fr 1fr",
             gap: 5,
             flex: 1,
             minHeight: 0,
