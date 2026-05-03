@@ -16,7 +16,8 @@ export const RightPanel = ({
     <div
       style={{
         padding: 10,
-        height: "100vh",
+        height: "100%",
+        minHeight: 0,
         overflow: "hidden",
       }}
     >
@@ -24,13 +25,13 @@ export const RightPanel = ({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 4,
           height: "100%",
           minHeight: 0,
         }}
       >
         {/* =========================
-            🔴 上段（復活ポイント）
+            🔴 上段
         ========================= */}
         <div
           style={{
@@ -53,8 +54,7 @@ export const RightPanel = ({
             gridTemplateColumns: "5.5fr 4.5fr",
             gap: 5,
             flex: "0 0 45%",
-            minHeight: 450,
-            overflow: "visible",
+            minHeight: 400,
           }}
         >
           <RadarPanel activePair={activePair} />
@@ -62,20 +62,38 @@ export const RightPanel = ({
         </div>
 
         {/* =========================
-            🟢 下段
+            🟢 下段（ここが核心）
         ========================= */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 5,
+            display: "flex",
+            overflowX: "auto",          // ← 横スクロール
+            overflowY: "hidden",
+            gap: 8,
             flex: 1,
             minHeight: 0,
-            overflow: "hidden",
           }}
         >
-          <ScreenshotPanel activePair={activePair} />
-          <HomeChartPanel activePair={activePair} />
+          {/* スクショ（固定） */}
+          <div
+            style={{
+              minWidth: 380,
+              maxWidth: 420,
+              flexShrink: 0,
+            }}
+          >
+            <ScreenshotPanel activePair={activePair} />
+          </div>
+
+          {/* チャート（広く） */}
+          <div
+            style={{
+              minWidth: 800,           // ← ここが主役
+              flex: "1 1 auto",
+            }}
+          >
+            <HomeChartPanel activePair={activePair} />
+          </div>
         </div>
       </div>
     </div>
