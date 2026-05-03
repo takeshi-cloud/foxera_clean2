@@ -6,35 +6,37 @@ import { useState, useEffect } from "react";
 import { Header } from "./Header";
 import { Row } from "./Row";
 import { QuickUploadModal } from "@/components/screenshot/QuickUploadModal";
-
+import { getCurrentStatus } from "@/lib/workflow/CurrentStatus/getCurrentStatus";
 import {
   PHASES,
   TIMEFRAME_TYPES,
 } from "@/lib/constants/LogOptions";
+import {
+  buildStatusMap,
+   buildMergedPairs,
+  filterPairs,
+  getDisplayPairs,
+} from "../../lib/pairStatusBuilder";
+import {
+  filterByDirection,
+  sortCurrent,
+  sortByDirection,
+} from "../../lib/boardUtils";
+
 
 // =============================
 type Board = {
   id: string;
   pair: string;
   phase: string;
-  direction: "long" | "short";
+  direction: "long" | "short"
   timeframe_type: string;
 };
 
 // =============================
 // 🔥 ロジック（UIから分離）
 // =============================
-const filterByDirection = (
-  boards: Board[],
-  showLong: boolean,
-  showShort: boolean
-) => {
-  return boards.filter((b) => {
-    if (!showLong && b.direction === "long") return false;
-    if (!showShort && b.direction === "short") return false;
-    return true;
-  });
-};
+
 
 export const CenterPanel = ({
   boards,
@@ -63,7 +65,7 @@ export const CenterPanel = ({
   console.log("boards raw:", boards);
 
   const phases = PHASES.slice(1);
-
+  const sortedBoards = sortCurrent(boards);
   const longBoards = boards.filter(
     (b: Board) =>
       b.timeframe_type === TIMEFRAME_TYPES[0] ||
@@ -90,16 +92,32 @@ export const CenterPanel = ({
   const filteredLongBoards = filterByDirection(longBoards, showLong, showShort);
   const filteredShortBoards = filterByDirection(shortBoards, showLong, showShort);
 
-  const normalize = (pair: string) =>
-    pair?.replace("/", "").toUpperCase();
 
-  const sortFn = (a: any, b: any) => {
-    const p = (x: string) =>
-      x === "Trigger" ? 0 : x === "Pullback" ? 1 : 2;
-    return p(a.phase) - p(b.phase);
+ // =========================================
+// 🔥 ここが本体（修正済み）
+// =========================================
+
+const sortedLongBoards = sortByDirection(filteredLongBoards);
+const sortedShortBoards = sortByDirection(filteredShortBoards);
+const normalize = (pair: string) =>
+  pair?.replace("/", "").toUpperCase();
+const [openQuickUpload, setOpenQuickUpload] = useState(false);
+const [statusMap, setStatusMap] = useState(new Map());
+useEffect(() => {
+  const load = async () => {
+  const res = await getCurrentStatus();
+   console.log("STATUS RAW", res); // ←これ
+    setStatusMap(buildStatusMap(res));
   };
 
-  const [openQuickUpload, setOpenQuickUpload] = useState(false);
+  load();
+}, []);
+
+const filteredPairs =
+  statusMap.size > 0
+    ? getDisplayPairs(boards, statusMap, showLong, showShort)
+    : [];
+
 
   // =============================
   // 🔥 ここだけ調整値
@@ -107,52 +125,51 @@ export const CenterPanel = ({
   const PADDING = isMobile ? "4px" : "12px";
   const GAP = isMobile ? "4px" : "12px";
   const SECTION_GAP = isMobile ? "6px" : "12px";
+  
 
   return (
     <div style={{ flex: 1, padding: PADDING, color: "white" }}>
 
       {/* ================= 現在の状況 ================= */}
-
+    
       <h3>現在の状況</h3>
 
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
-          gap: GAP,
+          gap: "2px",
         }}
       >
-        <div>
-          <Header />
-          {[...filteredLongBoards]
-            .sort(sortFn)
-            .filter((_, i) => i % 2 === 0)
-            .map((card) => (
-              <Row
-                key={card.id}
-                card={card}
-                shortBoards={filteredShortBoards}
-                activePair={activePair}
-                setActivePair={setActivePair}
-              />
-            ))}
-        </div>
+ <div>
+  <Header />
+ {filteredPairs
+  .filter((_, i) => i % 2 === 0)
+    .map((card) => (
+      <Row
+        key={card.id}
+        card={card}
+        shortBoards={sortedShortBoards}
+        activePair={activePair}
+        setActivePair={setActivePair}
+      />
+    ))}
+</div>
 
-        <div>
-          <Header />
-          {[...filteredLongBoards]
-            .sort(sortFn)
-            .filter((_, i) => i % 2 === 1)
-            .map((card) => (
-              <Row
-                key={card.id}
-                card={card}
-                shortBoards={filteredShortBoards}
-                activePair={activePair}
-                setActivePair={setActivePair}
-              />
-            ))}
-        </div>
+<div>
+  <Header />
+ {filteredPairs
+  .filter((_, i) => i % 2 === 1)
+    .map((card) => (
+      <Row
+        key={card.id}
+        card={card}
+        shortBoards={sortedShortBoards}
+        activePair={activePair}
+        setActivePair={setActivePair}
+      />
+    ))}
+</div>
       </div>
 
       {/* ================= HTF ================= */}
@@ -225,7 +242,7 @@ export const CenterPanel = ({
 
       <div style={{ display: "flex", gap: GAP }}>
         {phases.map((phase) => {
-          const items = filteredLongBoards.filter((b) => b.phase === phase);
+          const items = sortedLongBoards.filter((b) => b.phase === phase);
 
           return (
             <Droppable key={phase} droppableId={`long-${phase}`}>
@@ -278,7 +295,7 @@ export const CenterPanel = ({
 
       <div style={{ display: "flex", gap: GAP }}>
         {phases.map((phase) => {
-          const items = filteredShortBoards.filter((b) => b.phase === phase);
+          const items = sortedShortBoards.filter((b) => b.phase === phase);
 
           return (
             <Droppable key={phase} droppableId={`short-${phase}`}>

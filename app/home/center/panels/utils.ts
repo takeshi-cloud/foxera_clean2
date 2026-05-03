@@ -1,7 +1,8 @@
 
 // ===== カラム幅（Header / Row 共通）=====
 // Pair広め・Dir小さめ・Phase固定でズレ防止
-export const COLS = "1.6fr 0.5fr 0.5fr 1fr 1fr 0.5fr 0.5fr";
+export const COLS =
+  "1.5fr 22px 22px 44px 44px 22px 36px";
 
 
 // ===== フェーズカラー =====
