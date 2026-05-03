@@ -183,9 +183,9 @@ const filteredPairs =
           marginBottom: "10px",
         }}
       >
-        <h3 style={{ margin: 0 }}>①HTF</h3>
+        <h3 style={{ marginTop: 0 }}>①HTF</h3>
 
-        <span style={{ fontSize: "11px", color: "#b0c0d6", marginLeft: "8px" }}>
+        <span style={{ fontSize: "12px", color: "#b0c0d6", marginLeft: "8px" }}>
           FILTER
         </span>
 
@@ -200,6 +200,8 @@ const filteredPairs =
               border: "none",
               cursor: "pointer",
               fontSize: "12px",
+               fontWeight: 600,
+              
             }}
           >
             LONG
@@ -215,6 +217,7 @@ const filteredPairs =
               border: "none",
               cursor: "pointer",
               fontSize: "12px",
+               fontWeight: 600,
             }}
           >
             SHORT
@@ -240,7 +243,12 @@ const filteredPairs =
 
       </div>
 
-      <div style={{ display: "flex", gap: GAP }}>
+ <div
+  style={{
+    display: "grid",
+   gridTemplateColumns: "repeat(4, minmax(120px, 1fr))"
+  }}
+>
         {phases.map((phase) => {
           const items = sortedLongBoards.filter((b) => b.phase === phase);
 
@@ -251,11 +259,12 @@ const filteredPairs =
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   style={{
-                    flex: 1,
+                   width: "100%",        // ← これ明示
+                   minWidth: 0,          // ← 🔥 これ超重要（効かない原因の本体）
                     minHeight: 120,
                     background: getPhaseBg(phase),
                     borderRadius: 8,
-                    padding: isMobile ? 4 : 8,
+                    padding: isMobile ? 2 : 2,
                     border: "1px solid #334155",
                   }}
                 >
@@ -291,9 +300,14 @@ const filteredPairs =
 
       {/* ================= LTF ================= */}
 
-      <h3 style={{ marginTop: 16 }}>②LTF</h3>
+      <h3 style={{ marginTop: 10 }}>②LTF</h3>
 
-      <div style={{ display: "flex", gap: GAP }}>
+ <div
+  style={{
+    display: "grid",
+ gridTemplateColumns: "repeat(4, minmax(120px, 1fr))",
+  }}
+>
         {phases.map((phase) => {
           const items = sortedShortBoards.filter((b) => b.phase === phase);
 
@@ -304,11 +318,12 @@ const filteredPairs =
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   style={{
-                    flex: 1,
+                    width: "100%",        // ← これ明示
+                   minWidth: 0, 
                     minHeight: 120,
                     background: getPhaseBg(phase),
                     borderRadius: 8,
-                    padding: isMobile ? 4 : 8,
+                    padding: isMobile ? 2 : 2,
                     border: "1px solid #334155",
                   }}
                 >

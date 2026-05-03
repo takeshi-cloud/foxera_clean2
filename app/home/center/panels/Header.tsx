@@ -8,7 +8,7 @@ export const Header = () => {
       style={{
         display: "grid",
         gridTemplateColumns: COLS, // 👈 utilsと統一
-        fontSize: "11px",          // 👈 小さくしてズレ防止
+        fontSize: "10px",          // 👈 小さくしてズレ防止
         opacity: 0.6,
         marginBottom: "4px",
         gap: "4px",
@@ -16,8 +16,8 @@ export const Header = () => {
       }}
     >
       <div>Pair</div>
-      <div>Dir①</div>
-      <div>Dir②</div>
+      <div>Di①</div>
+      <div>Di②</div>
       <div>　Ph①</div>
       <div>　Ph②</div>
       <div>PD</div>

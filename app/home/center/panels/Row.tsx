@@ -28,7 +28,7 @@ export const Row = ({ card, activePair, setActivePair }: any) => {
     return (
       <div
         style={{
-          width: "20px",
+          width: "18px",
           textAlign: "center",
           fontWeight: "bold",
           fontSize: "13px",
@@ -155,12 +155,12 @@ const getMAIcon = (direction, phase) => {
       <div
         style={{
           background: getPhaseColor(htf?.phase),
-          padding: "2px 2px",
+          padding: "2px 0px",
           borderRadius: "4px",
           fontSize: "11px",
           textAlign: "center",
           fontWeight: "bold",
-          minWidth: "46px"
+          minWidth: "20px"
         }}
       >
         {htf?.phase ? formatPhase(htf.phase) : "-"}
@@ -175,7 +175,7 @@ const getMAIcon = (direction, phase) => {
           fontSize: "11px",
           textAlign: "center",
           fontWeight: "bold",
-          minWidth: "46px"
+          minWidth: "20px"
         }}
       >
         {ltf?.phase ? formatPhase(ltf.phase) : "-"}

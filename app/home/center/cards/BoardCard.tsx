@@ -80,7 +80,7 @@ export const BoardCard = ({
   const styles = {
     card: {
       width: "100%",
-      padding: "2px 5px",
+      padding: "2px 2px",
       marginTop: "2px", // ←修正
       borderRadius: "6px",
       background: "#020617",
@@ -102,7 +102,7 @@ export const BoardCard = ({
     },
 
     pair: {
-      fontSize: "15px",
+      fontSize: "14px",
       letterSpacing: "0.5px",
       fontWeight: 600,
     },
@@ -110,18 +110,18 @@ export const BoardCard = ({
     rightGroup: {
       marginLeft: "auto",
       display: "flex",
-      gap: "10px",
+      gap: "5px",
       alignItems: "center",
     },
 
     directionBox: {
-      width: "18px",
-      height: "18px",
+      width: "16px",
+      height: "16px",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       color: "white",
-      fontSize: "17px",
+      fontSize: "16px",
       borderRadius: "4px",
       cursor: "pointer",
     },
@@ -140,7 +140,7 @@ export const BoardCard = ({
     },
 
     tf: {
-      marginLeft: "6px",
+      marginLeft: "4px",
     },
 
     upload: {
@@ -149,7 +149,7 @@ export const BoardCard = ({
 
     noteRow: {
       marginTop: "2px",
-      fontSize: "14px",
+      fontSize: "12px",
       display: "flex",
       alignItems: "center",
       gap: "2px",
@@ -229,7 +229,7 @@ export const BoardCard = ({
 
       router.push(`/chart?symbol=${item.pair}`);
     }}
-    style={{ marginRight: 6 }}
+    style={{ marginRight: 2 }}
     title="チャートを見る"
   >
     📈

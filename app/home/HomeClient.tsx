@@ -168,8 +168,8 @@ export default function HomeClient() {
         <div
           style={{
             flex: 2,
-            minWidth: 620,
-            maxWidth: 720,
+            minWidth: 500,
+            maxWidth: 900,
             minHeight: "100%",
             overflowY: "auto",
           }}
