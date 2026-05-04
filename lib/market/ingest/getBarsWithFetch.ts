@@ -21,7 +21,7 @@ const sortAsc = (bars: any[]) =>
 export async function getBarsWithFetch(
   pair: string,
   tf: "15m" | "1h",
-  inputDate: Date,
+  baseTime: Date,
   required: number
 ) {
   console.log("\n========================");
@@ -34,7 +34,7 @@ export async function getBarsWithFetch(
   // =========================================
   // baseTime
   // =========================================
-  const baseTime = getBaseTime_MA(inputDate, tf);
+  
 
   console.log("🕒 BASE TIME", {
     tf,

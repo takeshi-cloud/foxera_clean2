@@ -127,12 +127,12 @@ return (
       </div>
 
       {/* 🔥 ボタンをまとめる */}
-      <div style={{ display: "flex", gap: 8 }}>
+      <div style={{ display: "flex", gap: 2 }}>
         <button
           onClick={handleRefreshMA}
           disabled={isCooling || loading}
           style={{
-            padding: "4px 10px",
+            padding: "4px 4px",
             fontSize: 12,
             background:
               isCooling || loading
@@ -153,7 +153,7 @@ return (
             router.push ( "/debug/maStructure");
           }}
           style={{
-            padding: "4px 10px",
+            padding: "4px 4px",
             fontSize: 12,
             background: "#6366f1",
             borderRadius: 4,

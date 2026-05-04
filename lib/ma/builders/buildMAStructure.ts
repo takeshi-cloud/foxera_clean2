@@ -35,26 +35,66 @@ export async function buildMAStructure(
     bars4h: bars4h.length,
   });
 
+  const removeSpike = (bars: any[], threshold = 0.03) =>
+  bars.filter((b, i) => {
+    if (i === 0) return true;
+
+    const prev = bars[i - 1].close;
+    const diff = Math.abs(b.close - prev) / prev;
+
+    return diff < threshold;
+  });
+
+const bars15m_cleaned = removeSpike(bars15m);
+const bars1h_cleaned = removeSpike(bars1h);
+const bars4h_cleaned = removeSpike(bars4h);
+
+const removeWeekend = (bars: any[]) =>
+  bars.filter((b) => {
+    const d = new Date(b.timestamp_utc).getUTCDay();
+    return d !== 0 && d !== 6;
+  });
+
+const bars15m_clean = removeWeekend(bars15m_cleaned);
+const bars1h_clean = removeWeekend(bars1h_cleaned);
+const bars4h_clean = removeWeekend(bars4h_cleaned);
+
+console.log("🧪 WEEKEND FILTER", {
+  "15m_before": bars15m.length,
+  "15m_after": bars15m_clean.length,
+
+  "1h_before": bars1h.length,
+  "1h_after": bars1h_clean.length,
+
+  "4h_before": bars4h.length,
+  "4h_after": bars4h_clean.length,
+});
   // =========================================
-  // 最低本数チェック
-  // =========================================
-  const MINIMUM = 19;
+// 最低本数チェック（MA用）
+// =========================================
+const MINIMUM = MA_PERIOD + 1;
 
-  if (bars15m.length < MINIMUM)
-    throw new Error("❌ 15m不足（19未満）");
+if (bars15m_clean.length < MINIMUM)
+  throw new Error("❌ 15m不足（clean後）");
 
-  if (bars1h.length < MINIMUM)
-    throw new Error("❌ 1h不足（19未満）");
+if (bars1h_clean.length < MINIMUM)
+  throw new Error("❌ 1h不足（clean後）");
 
-  if (bars4h.length < MINIMUM)
-    throw new Error("❌ 4h不足（19未満）");
+if (bars4h_clean.length < MINIMUM)
+  throw new Error("❌ 4h不足（clean後）");
 
   // =========================================
   // MA用ウィンドウ
   // =========================================
-  const window15 = bars15m.slice(-(MA_PERIOD + 1));
-  const window1h = bars1h.slice(-(MA_PERIOD + 1));
-  const window4h = bars4h.slice(-(MA_PERIOD + 1));
+  const window15 = bars15m_clean.slice(-(MA_PERIOD + 1));
+const window1h = bars1h_clean.slice(-(MA_PERIOD + 1));
+const window4h = bars4h_clean.slice(-(MA_PERIOD + 1));
+
+console.log("🧪 MA INPUT COUNT", {
+  "15m": window15.length,
+  "1h": window1h.length,
+  "4h": window4h.length,
+});
 
   // =========================================
   // 使用データログ

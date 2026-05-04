@@ -48,42 +48,39 @@ export const nyBarsBuilder = async (pair: string) => {
       return t >= weeklyRange.start && t < weeklyRange.end;
     });
 
-    // =========================
-    // 🔥 極値の発生位置を取る（ロジック影響なし）
-    // =========================
+// =========================
+// 🔥 極値の発生位置を取る（ロジック影響なし）
+// =========================
 
-    const findExtremes = (data: any[]) => {
-      if (!data.length) return null;
+const findExtremes = (data: any[]) => {
+  if (!data || !data.length) return null;
 
-      let high = data[0];
-      let low = data[0];
+  let high = data[0];
+  let low = data[0];
 
-      for (const d of data) {
-        if (d.high > high.high) high = d;
-        if (d.low < low.low) low = d;
-      }
+  for (const d of data) {
+    if (d.high > high.high) high = d;
+    if (d.low < low.low) low = d;
+  }
 
-      return {
-        high: {
-          value: high.high,
-          time: high.timestamp_utc,
-        },
-        low: {
-          value: low.low,
-          time: low.timestamp_utc,
-        },
-      };
-    };
+  return {
+    high: {
+      value: high.high,
+      time: high.timestamp_utc,
+    },
+    low: {
+      value: low.low,
+      time: low.timestamp_utc,
+    },
+  };
+};
 
-    const dailyExt = findExtremes(dailyData);
-    const weeklyExt = findExtremes(weeklyData);
+// =========================
+// BUILD
+// =========================
 
-    // =========================
-    // BUILD
-    // =========================
-
- const build = (data: any[]) => {
-  if (!data.length) return null;
+const build = (data: any[]) => {
+  if (!data || !data.length) return null;
 
   return {
     open: data[0].open,
@@ -91,7 +88,6 @@ export const nyBarsBuilder = async (pair: string) => {
     low: Math.min(...data.map((d) => d.low)),
     close: data[data.length - 1].close,
 
-    // 🔥 これ追加（これが欲しかったやつ）
     start: data[0].timestamp_utc,
     end: data[data.length - 1].timestamp_utc,
     count: data.length,
@@ -99,9 +95,12 @@ export const nyBarsBuilder = async (pair: string) => {
 };
 
 // =========================================
-// 🔥 異常値除去（ここに追加）
+// 🔥 異常値除去
 // =========================================
+
 const clean = (data: any[]) => {
+  if (!data || !data.length) return [];
+
   return data.filter((b, i, arr) => {
     if (!b) return false;
 
@@ -109,11 +108,9 @@ const clean = (data: any[]) => {
     const low = Number(b.low);
     const close = Number(b.close);
 
-    // ① 完全ゴミ（保存されてても排除）
     if (!high || !low || !close) return false;
     if (low <= 0) return false;
 
-    // ② 前足比較（スパイク検出）
     if (i === 0) return true;
 
     const prev = arr[i - 1];
@@ -121,9 +118,8 @@ const clean = (data: any[]) => {
     if (!prevClose) return false;
 
     const ratioHigh = high / prevClose;
-    const ratioLow  = low / prevClose;
+    const ratioLow = low / prevClose;
 
-    // ±20%超えたら異常
     if (ratioHigh > 1.2 || ratioLow < 0.8) {
       console.warn("🔥 REMOVE BAD BAR", {
         time: b.timestamp_utc,
@@ -138,43 +134,56 @@ const clean = (data: any[]) => {
   });
 };
 
-// 👇これを追加
+// =========================
+// 🔥 CLEAN適用（ここが本質）
+// =========================
+
 const dailyClean = clean(dailyData);
 const weeklyClean = clean(weeklyData);
 
-    const prevDaily = build(dailyClean);
+// 🔥 clean後で統一
+const dailyExt = findExtremes(dailyClean);
+const weeklyExt = findExtremes(weeklyClean);
 
-    log("DATA", "DAILY SUMMARY", {
-      range: {
-        start: dailyData[0]?.timestamp_utc,
-        end: dailyData[dailyData.length - 1]?.timestamp_utc,
-      },
-      count: dailyData.length,
-      high: dailyExt?.high,
-      low: dailyExt?.low,
-    });
+const prevDaily = build(dailyClean);
+const prevWeekly = build(weeklyClean);
 
-    const prevWeekly = build(weeklyClean);
+// =========================
+// LOG（clean後に合わせる）
+// =========================
 
-    log("DATA", "WEEKLY SUMMARY", {
-      range: {
-        start: weeklyData[0]?.timestamp_utc,
-        end: weeklyData[weeklyData.length - 1]?.timestamp_utc,
-      },
-      count: weeklyData.length,
-      high: weeklyExt?.high,
-      low: weeklyExt?.low,
-    });
+log("DATA", "DAILY SUMMARY", {
+  range: {
+    start: dailyClean[0]?.timestamp_utc,
+    end: dailyClean[dailyClean.length - 1]?.timestamp_utc,
+  },
+  count: dailyClean.length,
+  high: dailyExt?.high,
+  low: dailyExt?.low,
+});
 
+log("DATA", "WEEKLY SUMMARY", {
+  range: {
+    start: weeklyClean[0]?.timestamp_utc,
+    end: weeklyClean[weeklyClean.length - 1]?.timestamp_utc,
+  },
+  count: weeklyClean.length,
+  high: weeklyExt?.high,
+  low: weeklyExt?.low,
+});
+
+// =========================
+// DEBUG
+// =========================
 
 console.log("=== DAILY BARS ===");
-console.log(dailyData.map(b => b.timestamp_utc));
+console.log(dailyClean.map((b) => b.timestamp_utc));
 
 console.log("=== BASE TIME DAILY ===");
 console.log(dailyRange.start, dailyRange.end);
 
 console.log("=== WEEKLY BARS ===");
-console.log(weeklyData.map(b => b.timestamp_utc));
+console.log(weeklyClean.map((b) => b.timestamp_utc));
 
 console.log("=== BASE TIME WEEKLY ===");
 console.log(weeklyRange.start, weeklyRange.end);

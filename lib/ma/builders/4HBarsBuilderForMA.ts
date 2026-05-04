@@ -113,38 +113,48 @@ export function build4HBarsForMA (
   console.log("\n📦 NY 4H BUILDER START");
 
   // =============================
-  // ① ソート（1Hはそのまま使う）
-  // =============================
-  let bars = sortAsc(bars1h);
+// ① ソート（1Hは絶対に削らない）
+// =============================
+let bars = sortAsc(bars1h);
 
-  // =============================
-  // ② baseTimeでカット（1H）
-  // =============================
-  bars = bars.filter(
-    (b) =>
-      new Date(b.timestamp_utc) <= baseTime
-  );
+console.log("🧪 1H INPUT CHECK", {
+  count: bars.length,
+  first: bars[0]?.timestamp_utc,
+  last: bars[bars.length - 1]?.timestamp_utc,
+});
 
-  console.log("✂️ BASE CUT 1H", {
-    last:
-      bars[bars.length - 1]
-        ?.timestamp_utc,
-  });
+// =============================
+// ② ❌ ここで1Hをカットしない
+// 理由：4Hは「1H×4本」で成立するため
+// 途中で削ると4Hが壊れる
+// =============================
 
-  // =============================
-  // ③ 4H生成（←ここは連続性維持）
-  // =============================
-  let bars4h = build4H_NY(bars);
+// （削除済み）
+// bars = bars.filter(...)
 
-  console.log("📊 4H BUILT", {
-    count: bars4h.length,
-    from:
-      bars4h[0]?.timestamp_utc,
-    to:
-      bars4h[
-        bars4h.length - 1
-      ]?.timestamp_utc,
-  });
+// =============================
+// ③ 4H生成（ここで初めて構造を作る）
+// =============================
+let bars4h = build4H_NY(bars);
+
+console.log("📊 4H BUILT (RAW)", {
+  count: bars4h.length,
+  from: bars4h[0]?.timestamp_utc,
+  to: bars4h[bars4h.length - 1]?.timestamp_utc,
+});
+
+// =============================
+// ④ baseTimeで未確定4Hだけ除外
+// 理由：未来データ（未完成足）だけ落とす
+// =============================
+bars4h = bars4h.filter(
+  (b) => new Date(b.timestamp_utc) <= baseTime
+);
+
+console.log("✂️ AFTER BASE CUT 4H", {
+  count: bars4h.length,
+  last: bars4h[bars4h.length - 1]?.timestamp_utc,
+});
 
   // =========================================
   // 🔥 DEBUG（必要ならON）
@@ -182,19 +192,7 @@ export function build4HBarsForMA (
   //});
 
   // =============================
-  // ⑥ 必要本数だけ
-  // =============================
-  const result = bars4h.slice(-required);
-
-  console.log("✅ FINAL 4H", {
-    count: result.length,
-    from:
-      result[0]?.timestamp_utc,
-    to:
-      result[
-        result.length - 1
-      ]?.timestamp_utc,
-  });
-
-  return result;
+// ⑥ ここでは切らない（MA側でやる）
+// =============================
+return bars4h;
 }

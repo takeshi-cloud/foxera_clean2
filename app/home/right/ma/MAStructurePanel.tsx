@@ -175,7 +175,7 @@ function MAListRow({
           flex: 1,
           display: "flex",
           flexWrap: "nowrap",
-          gap: 10,
+          gap: 3,
           overflow: "hidden",
           whiteSpace: "nowrap",
         }}
@@ -184,33 +184,27 @@ function MAListRow({
           if (item === "PRICE") {
             return (
               <span key={item} style={{ color: "#60a5fa", fontWeight: "bold" }}>
-                PRICE{index < ordered.length - 1 && " <"}
+                PRICE{index < ordered.length - 1 && "<"}
               </span>
             );
           }
 
-          return (
-            <span
-              key={item}
-              style={{
-                color: "#e2e8f0",
-              }}
-            >
-              {item}
-              <span
-                style={{
-                  color:
-                    slopeMap[item] === "⇧"
-                      ? "#4ade80"
-                      : "#f87171",
-                }}
-              >
-                {" "}
-                {slopeMap[item]}
-              </span>
-              {index < ordered.length - 1 && " <"}
-            </span>
-          );
+return (
+  <span key={item} style={{ color: "#e2e8f0" }}>
+    {item}
+    <span
+      style={{
+        color:
+          slopeMap[item] === "⇧"
+            ? "#4ade80"
+            : "#f87171",
+      }}
+    >
+      {slopeMap[item]}
+    </span>
+    {index < ordered.length - 1 && "<"}
+  </span>
+);
         })}
       </div>
 

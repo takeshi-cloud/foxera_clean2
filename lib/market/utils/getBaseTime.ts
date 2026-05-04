@@ -55,14 +55,29 @@ function getLastWeeklyClose(base = new Date()) {
   const friday = new Date(end);
   friday.setUTCDate(end.getUTCDate() - diff);
 
-  // 🔥 ここだけ追加
-  friday.setUTCDate(friday.getUTCDate() - 7);
+  let adjusted = false;
 
-  log("DATA", "WEEKLY CLOSE", {
-    base: end.toISOString(),
-    friday: friday.toISOString(),
-    day,
-    diff,
+  // 金曜以外なら前週へ
+  if (day !== 5) {
+    friday.setUTCDate(friday.getUTCDate() - 7);
+    adjusted = true;
+  }
+
+  // 曜日名（見やすさ用）
+  const dayMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  log("FLOW", "WEEKLY CLOSE DECISION", {
+    baseTime: end.toISOString(),
+    baseDay: dayMap[day],
+    numericDay: day,
+
+    diffToFriday: diff,
+
+    computedFriday: new Date(end.getTime() - diff * 86400000).toISOString(),
+
+    adjustedToPrevWeek: adjusted,
+
+    finalFriday: friday.toISOString(),
   });
 
   return friday;

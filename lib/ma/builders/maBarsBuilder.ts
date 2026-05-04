@@ -37,16 +37,16 @@ export async function maBarsBuilder(
   const bars15m = await getBarsWithFetch(
     pair,
     "15m",
-    inputDate,
+    base15,
     required
   );
 
-  const bars1h = await getBarsWithFetch(
-    pair,
-    "1h",
-    inputDate,
-    100 // 4H用
-  );
+ const bars1h = await getBarsWithFetch(
+  pair,
+  "1h",
+  base4h, // 🔥ここを変更
+  150
+);
 
   console.log("📊 FETCHED RESULT", {
     bars15m_count: bars15m.length,
@@ -60,6 +60,13 @@ export async function maBarsBuilder(
       to: bars1h[bars1h.length - 1]?.timestamp_utc,
     },
   });
+  console.log("🧪 ALIGN CHECK", {
+  base15: base15.toISOString(),
+  last15: bars15m[bars15m.length - 1]?.timestamp_utc,
+
+  base4h: base4h.toISOString(),
+  last1h: bars1h[bars1h.length - 1]?.timestamp_utc,
+});
 
   // =========================================
   // 4H生成
@@ -106,9 +113,9 @@ export async function maBarsBuilder(
   }
 
   // 1hも厳密
-  if (last1h < base1h.getTime()) {
-    throw new Error("❌ 1h時間不足");
-  }
+  if (last1h < base4h.getTime()) {
+  throw new Error("❌ 1h時間不足");
+}
 
   // 4hは例外扱い（未完成許容）
   if (last4h < base4h.getTime()) {
