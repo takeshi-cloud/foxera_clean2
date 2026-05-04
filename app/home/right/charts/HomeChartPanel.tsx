@@ -11,6 +11,7 @@ import { HomeChartLayout } from "./HomeChartLayout";
 
 import { calcZigzag } from "@/lib/chart/zigzag/calcZigzag";
 import { mergeData } from "@/lib/chart/mergeData";
+import { buildDowLines } from "@/lib/chart/technical/buildDowLines";
 
 export function HomeChartPanel({
   activePair,
@@ -63,6 +64,7 @@ const [startDate, setStartDate] =
   return pair.slice(0, 3) + "/" + pair.slice(3);
 };
 
+const [dowLines, setDowLines] = useState<any[]>([]);
   // =============================
   // 🔥 activePair → symbol反映
   // =============================
@@ -97,6 +99,10 @@ const [startDate, setStartDate] =
 
       const zigzagData =
         calcZigzag(json);
+        console.log("ZIGZAG", zigzagData);
+
+      const dowLines = buildDowLines(zigzagData);
+     setDowLines(dowLines); // ←これ必須
 
       const mergedData =
         mergeData(json, zigzagData);
@@ -108,7 +114,7 @@ const [startDate, setStartDate] =
       setLoading(false);
     }
   };
-
+console.log("DOW", dowLines);
   // =============================
   // 🔥 debounce付き自動ロード
   // =============================
@@ -168,6 +174,7 @@ const [startDate, setStartDate] =
         merged={merged}
         showLine={showLine}
         showZigzag={showZigzag}
+         dowLines={dowLines}   // ←追加
       />
     </div>
   );

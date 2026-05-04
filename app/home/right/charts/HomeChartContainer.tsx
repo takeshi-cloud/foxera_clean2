@@ -14,14 +14,16 @@ type Props = {
   merged: any[];
   showLine: boolean;
   showZigzag: boolean;
+  dowLines: any[];
 };
 
 export function HomeChartContainer({
   merged,
   showLine,
   showZigzag,
+   dowLines, // ←追加
 }: Props) {
-
+ console.log("🔥 CONTAINER RENDER");
   // =============================
   // 🎯 JST変換（安定版）
   // =============================
@@ -77,10 +79,15 @@ export function HomeChartContainer({
       </g>
     );
   };
-
+console.log("LINES", dowLines);
+console.log("CHECK INDEX", dowLines.map(l => ({
+  fromIndex: l.fromIndex,
+  breakIndex: l.breakIndex,
+  time: merged[l.fromIndex]?.time,
+})));
   return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <ResponsiveContainer width="100%" height="100%">
+<div style={{ width: "100%", height: "100%", minHeight: 300 }}>
+ <ResponsiveContainer width="100%" height={300}>
         <LineChart
           data={merged}
           margin={{
@@ -125,6 +132,35 @@ export function HomeChartContainer({
           })}
 
           <YAxis domain={["auto", "auto"]} width={50} />
+          <ReferenceLine y={1.64} stroke="red" />
+
+          {/* 🔥 ここに追加 */}
+{dowLines.map((line, i) => {
+  const startTime = line.time;
+
+  return (
+    <Line
+      key={`dow-${i}`}
+      type="linear"
+      dataKey={(d) => {
+        if (!startTime) return null;
+
+        return new Date(d.time) >= new Date(startTime)
+          ? line.price
+          : null;
+      }}
+      stroke={
+        line.type === "trendBreakUp"
+          ? "#00ff00"
+          : "#ff0000"
+      }
+      strokeWidth={2}
+      dot={false}
+      connectNulls
+    />
+  );
+})}
+
 
           {showLine && (
             <Line

@@ -1,6 +1,3 @@
-// =========================================
-// 🧠 mergeData（linePrice + zigzag統合）
-// =========================================
 export function mergeData(
   data: any[],
   zigzagData: any[]
@@ -8,21 +5,19 @@ export function mergeData(
   console.log("LINE SAMPLE:", data[0]);
   console.log("ZIGZAG SAMPLE:", zigzagData[0]);
 
-  // 🔥 事前にMap化（高速化）
   const zigzagMap = new Map(
     zigzagData.map((z) => [z.time, z])
   );
 
-  return data.map((d) => {
+  return data.map((d, i) => {
     const zz = zigzagMap.get(d.time);
 
     return {
       ...d,
 
-      // 👇 lineChartで作った値をそのまま使う
-      linePrice: d.linePrice,
+      idx: i, // 🔥これ追加（最重要）
 
-      // 👇 zigzag
+      linePrice: d.linePrice,
       zigzag: zz ? zz.price : null,
     };
   });

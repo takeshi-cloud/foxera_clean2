@@ -7,6 +7,7 @@ type Props = {
   merged: any[];
   showLine: boolean;
   showZigzag: boolean;
+   dowLines: any[];
 };
 
 export function HomeChartLayout({
@@ -14,6 +15,8 @@ export function HomeChartLayout({
   merged,
   showLine,
   showZigzag,
+   dowLines, // ←追加
+   
 }: Props) {
   if (loading) {
     return (
@@ -22,7 +25,7 @@ export function HomeChartLayout({
       </div>
     );
   }
-
+console.log("dowLines", dowLines);
   return (
     <div
       style={{
@@ -35,6 +38,7 @@ export function HomeChartLayout({
         merged={merged}
         showLine={showLine}
         showZigzag={showZigzag}
+        dowLines={dowLines} 
       />
     </div>
   );
