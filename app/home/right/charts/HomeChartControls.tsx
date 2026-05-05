@@ -18,6 +18,7 @@ type Props = {
   onShowZigzagChange: (v: boolean) => void;
 
   onLoad: () => void;
+  setActivePair: (pair: string) => void;   // ←追加
 };
 
 export function HomeChartControls({
@@ -34,6 +35,7 @@ export function HomeChartControls({
   onShowLineChange,
   onShowZigzagChange,
   onLoad,
+  setActivePair,   // ←追加
 }: Props) {
   return (
     <div
@@ -48,11 +50,14 @@ export function HomeChartControls({
     >
       <select
         value={symbol}
-        onChange={(e) =>
-          onSymbolChange(
-            e.target.value
-          )
-        }
+        onChange={(e) => {
+  const val = e.target.value;
+
+  onSymbolChange(val);
+
+  const key = val.replace("/", "");
+  setActivePair(key);
+}}
       >
         {MARKETS.map((m) => (
           <option
@@ -63,6 +68,8 @@ export function HomeChartControls({
           </option>
         ))}
       </select>
+
+
 
       <select
         value={tf}

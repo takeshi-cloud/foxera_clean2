@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 
 export function MAStructurePanel({
   activePair,
+  setActivePair,
 }: {
   activePair: string;
+  setActivePair: (pair: string) => void;
 }) {
   const [rows, setRows] = useState<any[]>([]);
   const [baseTime, setBaseTime] = useState("");
@@ -58,6 +60,7 @@ export function MAStructurePanel({
 
   return (
     <div
+    
       style={{
         border: "1px solid #334155",
         borderRadius: 8,
@@ -81,6 +84,7 @@ export function MAStructurePanel({
             key={row.pair}
             row={row}
             activePair={activePair}
+            setActivePair={setActivePair}   // ←追加
           />
         ))}
       </div>
@@ -91,9 +95,11 @@ export function MAStructurePanel({
 function MAListRow({
   row,
   activePair,
+  setActivePair, 
 }: {
   row: any;
   activePair: string;
+   setActivePair: (pair: string) => void;
 }) {
   const normalize = (p: any) =>
     String(p ?? "").replace("/", "");
@@ -104,7 +110,9 @@ function MAListRow({
   if (!row.structure_order) {
     return (
       <div
+       onClick={() => setActivePair(row.pair)}   // ←ここ
         style={{
+            cursor: "pointer",                      // ←ここ
           background: "#7f1d1d",
           color: "white",
           padding: "8px 5px",
@@ -136,6 +144,7 @@ function MAListRow({
 
   return (
     <div
+      onClick={() => setActivePair(row.pair)}
       style={{
         display: "flex",
         alignItems: "center",

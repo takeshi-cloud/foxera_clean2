@@ -13,8 +13,10 @@ type RadarPoint = {
 
 export const RadarPanel = ({
   activePair,
+  setActivePair,
 }: {
   activePair: string;
+  setActivePair: (pair: string) => void;
 }) => {
   const [data, setData] = useState<RadarPoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,10 +107,12 @@ export const RadarPanel = ({
         {loading ? (
           <div>Loading...</div>
         ) : (
-          <RadarScatterChart
-            data={data}
-            activePair={activePair}
-          />
+<RadarScatterChart
+  data={data}
+  activePair={activePair}
+  setActivePair={setActivePair}
+/>
+
         )}
       </div>
     </div>

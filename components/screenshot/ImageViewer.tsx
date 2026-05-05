@@ -11,7 +11,7 @@ export default function ImageViewer({ src }: { src: string }) {
 
   const [fitScale, setFitScale] = useState(1);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
-
+const [isFull, setIsFull] = useState(false);
   // =============================
   // 🔥 マウス離したら必ず解除
   // =============================
@@ -120,6 +120,7 @@ export default function ImageViewer({ src }: { src: string }) {
   return (
     <div
       id="viewer-root"
+      onClick={() => setIsFull(!isFull)}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -199,9 +200,13 @@ export default function ImageViewer({ src }: { src: string }) {
     position: "absolute",
     top: 0,
     left: 0,
+    width: isFull ? "100%" : "auto",
+height: isFull ? "100%" : "auto",
     objectFit:"contain",
 
-    transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
+    transform: isFull
+  ? "translate(0px, 0px) scale(1)"
+  : `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
     transformOrigin: "top left",
 
     pointerEvents: "none",

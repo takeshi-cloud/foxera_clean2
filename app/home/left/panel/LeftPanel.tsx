@@ -26,11 +26,36 @@ export const LeftPanel = ({
           style={{
             height: "100vh",
             overflow: "hidden",
-            padding: "12px",
+            padding: "4px 12px 12px 12px",
             background: "#0f172a",
           }}
         >
-          <h3 style={{ color: "white" }}>通貨ペア</h3>
+ <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  }}
+>
+ <h3 style={{ color: "white", margin: 0 }}>通貨ペア</h3>
+
+  <button
+    onClick={() => window.location.reload()}
+    style={{
+      fontSize: "11px",
+      padding: "4px 8px",
+      borderRadius: "6px",
+      background: "#22c55e",
+      color: "#fff",
+      border: "none",
+      cursor: "pointer",
+      fontWeight: 600,
+    }}
+  >
+    更新
+  </button>
+</div>
 
           {/* スクロール領域 */}
           <div

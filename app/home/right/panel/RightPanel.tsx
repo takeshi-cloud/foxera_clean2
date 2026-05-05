@@ -9,8 +9,10 @@ import { ScreenshotPanel } from "../screenshot/ScreenshotPanel";
 
 export const RightPanel = ({
   activePair,
+  setActivePair,
 }: {
   activePair: string;
+  setActivePair: (pair: string) => void;
 }) => {
   return (
     <div
@@ -57,8 +59,15 @@ export const RightPanel = ({
             minHeight: 400,
           }}
         >
-          <RadarPanel activePair={activePair} />
-          <MAStructurePanel activePair={activePair} />
+<RadarPanel
+  activePair={activePair}
+  setActivePair={setActivePair}
+/>
+
+<MAStructurePanel
+  activePair={activePair}
+  setActivePair={setActivePair}
+/>
         </div>
 
         {/* =========================
@@ -82,7 +91,10 @@ export const RightPanel = ({
               flexShrink: 0,
             }}
           >
-            <ScreenshotPanel activePair={activePair} />
+<ScreenshotPanel
+  activePair={activePair}
+  setActivePair={setActivePair}
+/>
           </div>
 
           {/* チャート（広く） */}
@@ -92,7 +104,10 @@ export const RightPanel = ({
               flex: "1 1 auto",
             }}
           >
-            <HomeChartPanel activePair={activePair} />
+ <HomeChartPanel
+  activePair={activePair}
+  setActivePair={setActivePair}
+/>
           </div>
         </div>
       </div>

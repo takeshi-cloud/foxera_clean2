@@ -15,8 +15,10 @@ import { buildDowLines } from "@/lib/chart/technical/buildDowLines";
 
 export function HomeChartPanel({
   activePair,
+  setActivePair,
 }: {
   activePair: string;
+  setActivePair: (pair: string) => void;   // ←これ追加
 }) {
   const [symbol, setSymbol] =
     useState(activePair || "GBP/JPY");
@@ -30,17 +32,23 @@ export function HomeChartPanel({
 
   const DAY = 1000 * 60 * 60 * 24;
 
-const sixDaysAgo = new Date(
-  Date.now() - DAY * 6
+  const tomorrow = new Date(
+  Date.now() + 9 * 60 * 60 * 1000 + DAY
+)
+  .toISOString()
+  .slice(0, 10);
+
+const tenDaysAgo = new Date(
+  Date.now() - DAY * 10
 )
   .toISOString()
   .slice(0, 10);
 
 const [startDate, setStartDate] =
-  useState(sixDaysAgo);
+  useState(tenDaysAgo);
 
   const [endDate, setEndDate] =
-    useState(today);
+    useState(tomorrow);
 
   const [merged, setMerged] =
     useState<any[]>([]);
@@ -167,6 +175,7 @@ console.log("DOW", dowLines);
         onShowLineChange={setShowLine}
         onShowZigzagChange={setShowZigzag}
         onLoad={() => handleLoad(symbol)}
+          setActivePair={setActivePair}   // ←これある？
       />
 
       <HomeChartLayout

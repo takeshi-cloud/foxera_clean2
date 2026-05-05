@@ -1,5 +1,5 @@
 "use client";
-
+import { useRef } from "react";
 import { useEffect, useState } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
 
@@ -49,6 +49,9 @@ export default function HomeClient() {
 
   const [cursor, setCursor] =
     useState(0);
+
+const startY = useRef(0);
+const currentY = useRef(0);
 
   // =====================================
   // 🔥 初回復元（localStorage）
@@ -135,15 +138,28 @@ export default function HomeClient() {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div
-        style={{
-          display: "flex",
-          minHeight: "100%",
-          background: "#020617",
-          overflowX: "auto",
-          width:"100%",
-          overflowY: "auto",
-        }}
-      >
+  onTouchStart={(e) => {
+  startY.current = e.touches[0].clientY;
+}}
+onTouchMove={(e) => {
+  currentY.current = e.touches[0].clientY;
+}}
+onTouchEnd={() => {
+  const diff = currentY.current - startY.current;
+
+  if (diff > 80) {
+    window.location.reload();
+  }
+}}
+  style={{
+    display: "flex",
+    minHeight: "100%",
+    background: "#020617",
+    overflowX: "auto",
+    width: "100%",
+    overflowY: "auto",
+  }}
+>
         {/* LEFT */}
         <div
           style={{
@@ -207,6 +223,7 @@ minWidth: 900,
         >
           <RightPanel
             activePair={activePair || lastActivePair}
+              setActivePair={setActivePair}
           />
         </div>
 

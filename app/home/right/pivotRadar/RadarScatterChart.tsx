@@ -76,16 +76,20 @@ const findAvailableY = (targetY: number, minGap: number) => {
 };
 
 // 🔥 ラベル（active対応：枠付き）
-const CustomLabel = (props: any, activePair: string) => {
-  const { x, y, value } = props;
+const CustomLabel = (
+  props: any,
+  activePair: string,
+  setActivePair: (pair: string) => void
+) => {
+  const { x, y, value, payload } = props;
+  console.log("PAIR", payload?.pair);
+console.log("ACTIVE", activePair);
 
-  // 🔥 "/"ありなし吸収
- const normalize = (p: any) =>
-  String(p ?? "").replace("/", "");
-
-  const isActive =
-    normalize(value) === normalize(activePair);
-
+  const normalize = (p: any) =>
+  String(p ?? "").replace("/", "").toUpperCase();
+const pair = value;
+ const isActive =
+  normalize(pair) === normalize(activePair);
   const labelY = findAvailableY(y, 10);
   const isRightSide = x > 250;
   const offsetX = 25;
@@ -107,6 +111,7 @@ const CustomLabel = (props: any, activePair: string) => {
         stroke={isActive ? "#ff00cc" : "white"}
         strokeWidth={isActive ? 2 : 1}
         opacity={0.8}
+        pointerEvents="none"   // ←追加
       />
 
       {/* 🔥 ピンク枠 */}
@@ -124,8 +129,12 @@ const CustomLabel = (props: any, activePair: string) => {
           stroke="#ff00cc"
           strokeWidth={1.5}
           rx={4}
+          pointerEvents="none"   // ←追加
         />
       )}
+
+
+
 
       {/* テキスト */}
       <text
@@ -135,6 +144,11 @@ const CustomLabel = (props: any, activePair: string) => {
         fontSize={isActive ? 12 : 11}
         fontWeight={isActive ? "bold" : "normal"}
         textAnchor={isRightSide ? "start" : "end"}
+onClick={() => {
+  const pair = payload?.pair;
+   if (pair) setActivePair(pair.replace("/", ""));   // ←これ
+}}
+  style={{ cursor: "pointer" }}                 // ←追加
       >
         {value}
       </text>
@@ -145,9 +159,11 @@ const CustomLabel = (props: any, activePair: string) => {
 export const RadarScatterChart = ({
   data,
   activePair,
+  setActivePair,
 }: {
   data: any[];
   activePair: string;
+  setActivePair: (pair: string) => void;
 }) => {
   placedYs = [];
 
@@ -219,8 +235,10 @@ export const RadarScatterChart = ({
  const normalize = (p: any) =>
   String(p ?? "").replace("/", "");
 
+const pair = payload?.pair;
+
 const isActive =
-  normalize(payload.pair) === normalize(activePair);
+  pair && normalize(pair) === normalize(activePair);
     return (
       <circle
         cx={cx}
@@ -231,16 +249,21 @@ const isActive =
             ? "#ff00cc"
             : "#00ffcc"
         }
+ onClick={() => {
+  const pair = payload?.pair;
+ if (pair) setActivePair(pair.replace("/", ""));   // ←これ
+}}
+  style={{ cursor: "pointer" }}               // ←これもあると良い
       />
     );
   }}
 >
-  <LabelList
-    dataKey="pair"
-    content={(props) =>
-      CustomLabel(props, activePair)
-    }
-  />
+<LabelList
+  dataKey="pair"
+  content={(props) =>
+    CustomLabel(props, activePair, setActivePair)
+  }
+/>
 </Scatter>
       </ScatterChart>
     </ResponsiveContainer>
