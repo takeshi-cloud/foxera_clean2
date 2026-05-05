@@ -147,7 +147,7 @@ onTouchMove={(e) => {
 onTouchEnd={() => {
   const diff = currentY.current - startY.current;
 
-  if (diff > 80) {
+  if (diff > 220) {
     window.location.reload();
   }
 }}
