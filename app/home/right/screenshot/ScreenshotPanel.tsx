@@ -24,6 +24,8 @@ export const ScreenshotPanel = ({
 
   useEffect(() => {
     if (!activePair) return;
+     setShot(null); // ← 先にリセット（重要）
+
 
     const load = async () => {
       const { data } = await supabase

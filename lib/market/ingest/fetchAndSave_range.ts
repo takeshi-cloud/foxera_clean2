@@ -44,7 +44,8 @@ export async function fetchAndSave_range(
     console.warn("⚠️ no range data");
     return;
   }
-
+console.log("🔥 DATA RAW:", data);
+console.log("🔥 FIRST:", data[0]);
   // =========================================
   // 🔥 テーブル決定
   // =========================================
@@ -69,25 +70,18 @@ const OFFSET_MS = -10 * 60 * 60 * 1000;
 
 const formatted = data
   .map((d: any) => {
-    if (!d.timestamp_utc) return null;
-
-    const raw = new Date(d.timestamp_utc);
-    if (isNaN(raw.getTime())) return null;
-
-    const corrected = new Date(raw.getTime() + OFFSET_MS);
+    if (!d || !d.timestamp_utc) return null;
 
     return {
-      symbol, // ← DBはkeyのまま（重要）
+      symbol,
       open: Number(d.open),
       high: Number(d.high),
       low: Number(d.low),
       close: Number(d.close),
 
-      // 🔥 追加
-      timestamp_raw: raw.toISOString(),
-
-      // 🔥 差し替え
-      timestamp_utc: corrected.toISOString(),
+      // 🔥 そのまま使う
+      timestamp_raw: d.timestamp_utc,
+      timestamp_utc: d.timestamp_utc,
     };
   })
   .filter(Boolean);

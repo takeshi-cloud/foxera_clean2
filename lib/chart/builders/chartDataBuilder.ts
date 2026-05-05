@@ -43,46 +43,64 @@ export const chartDataBuilder = async (
     return buildChartSeries(rows);
   }
 
-  // =========================================
-  // 部分不足判定
-  // =========================================
-  const first = rows[0];
-  const last = rows[rows.length - 1];
+// =========================================
+// 部分不足判定（完全修正版）
+// =========================================
+const first = rows[0];
+const last = rows[rows.length - 1];
 
-  const firstDate = first.timestamp_utc.slice(0, 10);
-  const lastDate = last.timestamp_utc.slice(0, 10);
+// 🔥 UTCミリ秒で比較
+const startMs = new Date(start + "T00:00:00Z").getTime();
+const endMs = new Date(end + "T23:59:59Z").getTime();
 
-  if (firstDate > start) {
-    console.log(
-      "⚠️ missing head:",
-      start,
-      "→",
-      firstDate
-    );
+const firstMs = new Date(first.timestamp_utc).getTime();
+const lastMs = new Date(last.timestamp_utc).getTime();
+
+// 🔥 TFごとの1本の長さ
+const TF_MS_MAP: Record<string, number> = {
+  "5m": 5 * 60 * 1000,
+  "15m": 15 * 60 * 1000,
+  "1h": 60 * 60 * 1000,
+  "4h": 4 * 60 * 60 * 1000,
+};
+
+const ONE_BAR = TF_MS_MAP[tf] || 60 * 60 * 1000;
+
+// =========================================
+// HEAD
+// =========================================
+if (firstMs - startMs > ONE_BAR) {
+  console.log("⚠️ missing head:", start, "→", first.timestamp_utc);
+
+  await fetchAndSave_range(
+    symbol,
+    tf,
+    start,
+    new Date(firstMs - ONE_BAR).toISOString().slice(0, 10)
+  );
+}
+
+// =========================================
+// TAIL
+// =========================================
+const nowMs = Date.now();
+
+// TAIL
+if (endMs - lastMs > ONE_BAR) {
+  // 🔥 未来は取りに行かない
+  if (endMs > nowMs) {
+    console.log("⏹ skip tail fetch (future)");
+  } else {
+    console.log("⚠️ missing tail:", last.timestamp_utc, "→", end);
 
     await fetchAndSave_range(
       symbol,
       tf,
-      start,
-      firstDate
-    );
-  }
-
-  if (lastDate < end) {
-    console.log(
-      "⚠️ missing tail:",
-      lastDate,
-      "→",
-      end
-    );
-
-    await fetchAndSave_range(
-      symbol,
-      tf,
-      lastDate,
+      new Date(lastMs + ONE_BAR).toISOString().slice(0, 10),
       end
     );
   }
+}
 
   const sanitizeBars = (rows) => {
   if (!rows || rows.length === 0) return rows;

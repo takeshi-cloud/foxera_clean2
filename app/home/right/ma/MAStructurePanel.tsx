@@ -144,7 +144,9 @@ function MAListRow({
 
   return (
     <div
-      onClick={() => setActivePair(row.pair)}
+    onClick={() =>
+  setActivePair(row.pair.replace("/", ""))
+}
       style={{
         display: "flex",
         alignItems: "center",
