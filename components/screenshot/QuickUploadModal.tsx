@@ -38,30 +38,7 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
     if (f) handleFile(f);
   };
 
-  // ===============================
-  // 📋 ペースト対応（PC / iPad）
-  // ===============================
-  useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      if (!open) return;
-
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      for (const item of items) {
-        if (item.type.startsWith("image")) {
-          const f = item.getAsFile();
-          if (f) {
-            handleFile(f);
-            return;
-          }
-        }
-      }
-    };
-
-    document.addEventListener("paste", handlePaste);
-    return () => document.removeEventListener("paste", handlePaste);
-  }, [open]);
+  
 
   // ===============================
   // 💾 保存
@@ -93,6 +70,48 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
   };
 
   if (!open) return null;
+
+
+
+// ===============================
+// 🎯 iPad用：モーダルが開いたら textarea にフォーカス
+// ===============================
+useEffect(() => {
+  if (open) {
+    const el = document.getElementById("paste-catcher") as HTMLTextAreaElement;
+    el?.focus();
+  }
+}, [open]);
+
+// ===============================
+// 📋 iPad対応：textarea の paste を拾う
+// ===============================
+useEffect(() => {
+  const el = document.getElementById("paste-catcher") as HTMLTextAreaElement;
+  if (!el) return;
+
+  const handlePaste = (e: ClipboardEvent) => {
+    if (!open) return;
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image")) {
+        const f = item.getAsFile();
+        if (f) {
+          handleFile(f);
+          return;
+        }
+      }
+    }
+  };
+
+  el.addEventListener("paste", handlePaste);
+  return () => el.removeEventListener("paste", handlePaste);
+}, [open]);
+
+
 
   return (
     <div
@@ -201,23 +220,21 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
           accept="image/*"
           onChange={onSelectFile}
         />
-
-        {/* ================= 長押しペースト ================= */}
- <div
-  onPaste={(e) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    for (const item of items) {
-      if (item.type.startsWith("image")) {
-        const f = item.getAsFile();
-        if (f) {
-          handleFile(f);
-          return;
-        }
-      }
-    }
+{/* 🔥 iPad用：隠しペーストエリア */}
+<textarea
+  id="paste-catcher"
+  style={{
+    position: "absolute",
+    opacity: 0,
+    pointerEvents: "none",
+    height: 0,
+    width: 0,
   }}
+/>
+
+
+{/* ================= 長押しペースト ================= */}
+<div
   style={{
     marginTop: 10,
     padding: "14px",
@@ -232,22 +249,23 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
   📋 長押し → ペースト
 </div>
 
-        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.7 }}>
-          ドロップ / Ctrl+V / 長押しペースト OK
-        </div>
+<div style={{ marginTop: 8, fontSize: 12, opacity: 0.7 }}>
+  ドロップ / Ctrl+V / 長押しペースト OK
+</div>
 
-        {/* 状態 */}
-        {file && (
-          <div style={{ marginTop: 8, fontSize: 12 }}>
-            ✔ 画像セット済み
-          </div>
-        )}
+{/* 状態 */}
+{file && (
+  <div style={{ marginTop: 8, fontSize: 12 }}>
+    ✔ 画像セット済み
+  </div>
+)}
 
-        {loading && (
-          <div style={{ marginTop: 8, fontSize: 12 }}>
-            Uploading...
-          </div>
-        )}
+{loading && (
+  <div style={{ marginTop: 8, fontSize: 12 }}>
+    Uploading...
+  </div>
+)}
+
       </div>
     </div>
   );
