@@ -225,11 +225,14 @@ useEffect(() => {
 <textarea
   id="paste-catcher"
   style={{
-    position: "absolute",
+    position: "fixed",
+    top: 0,
+    left: 0,
     opacity: 0,
+    height: "1px",
+    width: "1px",
     pointerEvents: "none",
-    height: 0,
-    width: 0,
+    zIndex: -1,
   }}
 />
 
