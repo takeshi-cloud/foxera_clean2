@@ -69,10 +69,6 @@ export const QuickUploadModal = ({ open, onClose }: any) => {
     }
   };
 
-  if (!open) return null;
-
-
-
 // ===============================
 // 🎯 iPad用：モーダルが開いたら textarea にフォーカス
 // ===============================
@@ -112,6 +108,11 @@ useEffect(() => {
 }, [open]);
 
 
+
+
+
+
+  if (!open) return null;
 
   return (
     <div
