@@ -1,104 +1,183 @@
 export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/infra/supabase";
-import { fetchAndSave } from "@/lib/market/ingest/fetchAndSave";
-import { MARKETS } from "@/lib/constants/markets";
+import { fetchOHLC } from "@/lib/market/ingest/fetchMarketData";
 
-export async function POST(req: Request) {
+const OFFSET_MS = 10 * 60 * 60 * 1000;
+
+export async function GET() {
   try {
-    const body = await req.json();
-    const { pair } = body;
-
-    console.log("🚀 CORE PRICE API:", pair);
+    const symbol = "USD/JPY";
 
     // =========================================
-    // 🔥 MARKET統一（label → key）
+    // 🔥 fetchAndSave比較用
     // =========================================
-    const market = MARKETS.find((m) => m.label === pair);
-    if (!market) {
-      throw new Error(`Market not found: ${pair}`);
+    const tests = [
+      // =====================================
+      // DATE ONLY
+      // =====================================
+      {
+        label: "DATE_ONLY_SINGLE_DAY",
+        tf: "1h",
+
+        start: "2026-05-05",
+        end: "2026-05-05",
+      },
+
+      {
+        label: "DATE_ONLY_MULTI_DAY",
+        tf: "1h",
+
+        start: "2026-05-05",
+        end: "2026-05-05",
+      },
+
+      // =====================================
+      // ISO UTC
+      // =====================================
+      {
+        label: "ISO_UTC_DAY_RANGE",
+        tf: "1h",
+
+        start: "2026-05-05T00:00:00Z",
+        end: "2026-05-06T00:00:00Z",
+      },
+
+      {
+        label: "ISO_UTC_PIVOT_RANGE",
+        tf: "1h",
+
+        // NY daily想定
+        start: "2026-05-05T21:00:00Z",
+        end: "2026-05-06T21:00:00Z",
+      },
+
+      // =====================================
+      // +10h request
+      // =====================================
+      {
+        label: "ISO_PLUS_10H_REQUEST",
+        tf: "1h",
+
+        start: "2026-05-05T07:00:00Z",
+        end: "2026-05-06T07:00:00Z",
+      },
+
+    ];
+
+    const results = [];
+
+    for (const t of tests) {
+      console.log("\n=================================");
+      console.log("🧪 TEST:", t.label);
+
+      console.log("📡 REQUEST", {
+        tf: t.tf,
+        start: t.start,
+        end: t.end,
+      });
+
+      const data = await fetchOHLC(symbol, t.tf, {
+        from: t.start,
+        to: t.end,
+        outputsize: 5000,
+      });
+
+      console.log("📦 FETCH COUNT:", data?.length);
+
+      const rows =
+        data?.map((d: any, i: number) => {
+          // =====================================
+          // API RAW
+          // =====================================
+          const raw = d.raw_datetime;
+
+          // =====================================
+          // fetchOHLC後
+          // =====================================
+          const afterZ = d.timestamp_utc;
+
+          // =====================================
+          // save時 -10h想定
+          // =====================================
+          const afterSave = new Date(
+            new Date(afterZ).getTime() - OFFSET_MS
+          ).toISOString();
+
+          return {
+            no: i + 1,
+
+            // API raw
+            raw_datetime: raw,
+
+            // fetchOHLC後
+            after_z: afterZ,
+
+            // save後想定
+            after_save_minus10h: afterSave,
+
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close,
+          };
+        }) || [];
+
+      // =====================================
+      // console table
+      // =====================================
+      console.table(rows);
+
+      // =====================================
+      // first / last
+      // =====================================
+      const first = rows[0];
+      const last = rows[rows.length - 1];
+
+      console.log("📍 RANGE SUMMARY", {
+        first_raw: first?.raw_datetime,
+        last_raw: last?.raw_datetime,
+
+        first_after_z: first?.after_z,
+        last_after_z: last?.after_z,
+
+        first_after_save:
+          first?.after_save_minus10h,
+
+        last_after_save:
+          last?.after_save_minus10h,
+      });
+
+      results.push({
+        label: t.label,
+
+        request: {
+          start: t.start,
+          end: t.end,
+        },
+
+        count: rows.length,
+
+        first: first || null,
+        last: last || null,
+
+        rows,
+      });
     }
-
-    const dbSymbol = market.key;
-    const now = new Date();
-
-    // =========================================
-    // ① DBから最新取得
-    // =========================================
-    let { data } = await supabase
-      .from("ohlc_5m")
-      .select("close, timestamp_utc")
-      .eq("pair", dbSymbol)
-      .order("timestamp_utc", { ascending: false })
-      .limit(1);
-
-    let needFetch = true;
-
-    if (data && data.length >= 1) {
-      const latestTime = new Date(data[0].timestamp_utc);
-
-      const diffMin =
-        (now.getTime() - latestTime.getTime()) / 60000;
-
-      console.log("⏱ diffMin:", diffMin);
-
-      if (diffMin >= 0 && diffMin < 5) {
-        needFetch = false;
-      }
-    }
-
-    // =========================================
-    // ② 必要なら更新（1本だけ取得）
-    // =========================================
-    if (needFetch) {
-      console.log("🔄 fetching latest 5m (1 bar)");
-
-      const start = new Date();
-      start.setUTCDate(start.getUTCDate() - 1);
-
-      const startStr = start.toISOString().slice(0, 10);
-      const endStr = now.toISOString().slice(0, 10);
-
-      // 👇 ここ固定（重要）
-      await fetchAndSave(pair, "5m", startStr, endStr, 1);
-    }
-
-    // =========================================
-    // ③ 最新取得
-    // =========================================
-    const { data: fresh } = await supabase
-      .from("ohlc_5m")
-      .select("close, timestamp_utc")
-      .eq("pair", dbSymbol)
-      .order("timestamp_utc", { ascending: false })
-      .limit(1);
-
-    if (!fresh || fresh.length < 1) {
-      throw new Error("No 5m data");
-    }
-
-    const latest = fresh[0];
-
-    const price = Number(latest.close);
-
-    if (!price || isNaN(price)) {
-      throw new Error("Invalid price");
-    }
-
-    console.log("💰 PRICE:", price);
 
     return NextResponse.json({
       ok: true,
-      pair,
-      price,
-      timestamp: latest.timestamp_utc,
+      symbol,
+      tests: results,
     });
-
   } catch (e) {
-    console.error("🔥 CORE API ERROR:", e);
+    console.error("❌ TEST ERROR:", e);
 
     return NextResponse.json(
-      { error: String(e) },
+      {
+        ok: false,
+        error: String(e),
+      },
       { status: 500 }
     );
   }

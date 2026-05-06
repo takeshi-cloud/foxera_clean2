@@ -122,8 +122,11 @@ if (bars.length < required || isTimeMissing) {
     const from = new Date(baseTime);
     from.setUTCDate(from.getUTCDate() - 5); // 仮：余裕期間
 
-    const fromStr = from.toISOString().slice(0, 10);
-    const toStr = baseTime.toISOString().slice(0, 10);
+    const fromStr =
+  from.toISOString();
+
+const toStr =
+  baseTime.toISOString();
 
     console.log("🌐 FETCH RANGE", {
       from: fromStr,

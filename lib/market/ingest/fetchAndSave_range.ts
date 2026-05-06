@@ -34,11 +34,34 @@ export async function fetchAndSave_range(
   // =========================================
   // 🔥 API取得（期間指定）
   // =========================================
-  const data = await fetchOHLC(apiSymbol, timeframe, {
+
+
+// 🔥 ENDだけ +10h 拡張
+const endDate = new Date(end);
+
+endDate.setTime(
+  endDate.getTime() +
+  100 * 60 * 60 * 1000
+);
+
+const adjustedEnd =
+  endDate.toISOString();
+
+console.log("📡 RANGE REQUEST", {
+  start,
+  end,
+  adjustedEnd,
+});
+
+const data = await fetchOHLC(
+  apiSymbol,
+  timeframe,
+  {
     from: start,
-    to: end,
+    to: adjustedEnd,
     outputsize: 5000,
-  });
+  }
+);
 
   if (!data?.length) {
     console.warn("⚠️ no range data");
@@ -72,6 +95,15 @@ const formatted = data
   .map((d: any) => {
     if (!d || !d.timestamp_utc) return null;
 
+    const raw = new Date(d.timestamp_utc);
+
+    if (isNaN(raw.getTime())) return null;
+
+    // 🔥 API補正
+    const corrected = new Date(
+      raw.getTime() + OFFSET_MS
+    );
+
     return {
       symbol,
       open: Number(d.open),
@@ -79,9 +111,11 @@ const formatted = data
       low: Number(d.low),
       close: Number(d.close),
 
-      // 🔥 そのまま使う
-      timestamp_raw: d.timestamp_utc,
-      timestamp_utc: d.timestamp_utc,
+      // 検証用
+      timestamp_raw: raw.toISOString(),
+
+      // 🔥 DB保存は真UTC
+      timestamp_utc: corrected.toISOString(),
     };
   })
   .filter(Boolean);

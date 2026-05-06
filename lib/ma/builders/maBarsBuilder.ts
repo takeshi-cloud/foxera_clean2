@@ -44,7 +44,7 @@ export async function maBarsBuilder(
  const bars1h = await getBarsWithFetch(
   pair,
   "1h",
-  base4h, // 🔥ここを変更
+  base1h, // 🔥ここを変更
   150
 );
 

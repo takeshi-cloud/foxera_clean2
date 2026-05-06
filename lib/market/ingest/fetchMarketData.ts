@@ -32,14 +32,19 @@ export async function fetchOHLC(
 
   const apiInterval = intervalMap[interval] || interval;
 
-  const url = new URL("https://api.twelvedata.com/time_series");
+  const url = new URL(
+    "https://api.twelvedata.com/time_series"
+  );
 
   url.searchParams.append("symbol", apiSymbol);
   url.searchParams.append("interval", apiInterval);
 
   // 🔥 範囲指定がある場合はoutputsizeを使わない
   if (!from && !to) {
-    url.searchParams.append("outputsize", String(outputsize));
+    url.searchParams.append(
+      "outputsize",
+      String(outputsize)
+    );
   }
 
   url.searchParams.append(
@@ -47,37 +52,83 @@ export async function fetchOHLC(
     process.env.NEXT_PUBLIC_TWELVEDATA_KEY!
   );
 
-  // 🔥 ここが修正ポイント（超重要）
- if (from) {
-  url.searchParams.append("start_date", from);
-}
+  // =========================================
+  // 🔥 request
+  // =========================================
+  if (from) {
+    url.searchParams.append("start_date", from);
+  }
 
-if (to) {
-  url.searchParams.append("end_date", to);
-}
+  if (to) {
+    url.searchParams.append("end_date", to);
+  }
 
   console.log("🌐 FETCH URL:", url.toString());
 
+  // =========================================
+  // 🔥 fetch
+  // =========================================
   const res = await fetch(url.toString());
 
   console.log("🔥 fetch status:", res.status);
 
+  // =========================================
+  // 🔥 RAW RESPONSE TEXT
+  // =========================================
+  const text = await res.text();
+
+  
+  // JSON parse
+  const data = JSON.parse(text);
+
+  // =========================================
+  // 🔥 HTTP ERROR
+  // =========================================
   if (!res.ok) {
-    const text = await res.text();
-    console.error("❌ fetchOHLC HTTP error:", text);
+    console.error(
+      "❌ fetchOHLC HTTP error:",
+      text
+    );
+
     return [];
   }
 
-  const data = await res.json();
+  // =========================================
+  // 🔥 RAW API RESPONSE
+  // =========================================
+  console.log(
+    "========== RAW API RESPONSE =========="
+  );
 
-  console.log("🔥 RAW datetime sample:", data?.values?.[0]?.datetime);
-  console.log("🔥 RAW full sample:", data?.values?.[0]);
+  console.log(
+    JSON.stringify(
+      data?.values?.slice(0, 20),
+      null,
+      2
+    )
+  );
 
+  console.log(
+    "======================================"
+  );
+
+ 
+
+  // =========================================
+  // 🔥 API ERROR
+  // =========================================
   if (data.status === "error") {
-    console.error("❌ TwelveData Error:", data);
+    console.error(
+      "❌ TwelveData Error:",
+      data
+    );
+
     throw new Error(data.message);
   }
 
+  // =========================================
+  // 🔥 no data
+  // =========================================
   if (!data.values?.length) {
     console.warn("⚠️ no values:", {
       apiSymbol,
@@ -85,25 +136,45 @@ if (to) {
       from,
       to,
     });
+
     return [];
   }
 
-  console.log("✅ values count:", data.values.length);
+ 
 
-  return data.values.map((d: any, i: number) => {
-    
+  // =========================================
+  // 🔥 format
+  // =========================================
+  return data.values.map((d: any) => {
 
-    // 🔥 UTCとして固定解釈
-    const utc = new Date(d.datetime + "Z");
+    // 🔥 UTC固定解釈
+    const utc = new Date(
+      d.datetime + "Z"
+    );
+
+    console.log("🕒 CONVERT", {
+      raw: d.datetime,
+      afterZ: utc.toISOString(),
+    });
 
     return {
       symbol,
-      timestamp_utc: utc.toISOString(),
+
+      // 🔥 API raw
+      raw_datetime: d.datetime,
+
+      // 🔥 加工後
+      timestamp_utc:
+        utc.toISOString(),
+
       open: Number(d.open),
       high: Number(d.high),
       low: Number(d.low),
       close: Number(d.close),
-      volume: d.volume ? Number(d.volume) : null,
+
+      volume: d.volume
+        ? Number(d.volume)
+        : null,
     };
   });
 }

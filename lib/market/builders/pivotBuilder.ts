@@ -73,11 +73,10 @@ export const pivotBuilder = async (
     };
   }
 
-  const hasDailyBars = !!bars.prevDaily;
-  const hasWeeklyBars = !!bars.prevWeekly;
-  // =========================================
-// 🔥 VALIDATION（ここに入れる）
 // =========================================
+// 🔥 VALIDATION
+// =========================================
+
 const DAILY_REQUIRED = 20;
 const WEEKLY_REQUIRED = 110;
 
@@ -95,6 +94,13 @@ if (weeklyCount < WEEKLY_REQUIRED) {
   log("ERROR", "WEEKLY不足", { weeklyCount });
   bars.prevWeekly = null;
 }
+
+// =========================================
+// 🔥 VALIDATION後に判定
+// =========================================
+
+const hasDailyBars = !!bars.prevDaily;
+const hasWeeklyBars = !!bars.prevWeekly;
 
   // =========================================
   // 🔥 ① 元データ（既存）

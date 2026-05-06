@@ -69,11 +69,11 @@ export const getIntradayOHLC = async (
     log("FLOW", "FETCH START");
 
     await fetchAndSave(
-      symbol,
-      "1h",
-      fromISO.slice(0, 10),
-      toISO.slice(0, 10)
-    );
+  symbol,
+  "1h",
+  fromISO,
+  toISO
+)
 
     let retry = 0;
 

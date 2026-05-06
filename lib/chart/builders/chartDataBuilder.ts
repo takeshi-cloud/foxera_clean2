@@ -85,24 +85,37 @@ if (firstMs - startMs > ONE_BAR) {
 // =========================================
 const nowMs = Date.now();
 
-// TAIL
-if (endMs - lastMs > ONE_BAR) {
-  // 🔥 未来は取りに行かない
-  if (endMs > nowMs) {
-    console.log("⏹ skip tail fetch (future)");
-  } else {
-    console.log("⚠️ missing tail:", last.timestamp_utc, "→", end);
+// 🔥 future要求を現在時刻までに制限
+const effectiveEndMs = Math.min(endMs, nowMs);
 
-    await fetchAndSave_range(
-      symbol,
-      tf,
-      new Date(lastMs + ONE_BAR).toISOString().slice(0, 10),
-      end
-    );
-  }
+// =========================================
+// TAIL FETCH
+// =========================================
+if (effectiveEndMs - lastMs > ONE_BAR) {
+  console.log(
+    "⚠️ missing tail:",
+    last.timestamp_utc,
+    "→",
+    new Date(effectiveEndMs).toISOString()
+  );
+
+  await fetchAndSave_range(
+    symbol,
+    tf,
+
+    // 次に必要な開始
+    new Date(lastMs + ONE_BAR)
+      .toISOString()
+      .slice(0, 10),
+
+    // 🔥 future禁止
+    new Date(effectiveEndMs)
+      .toISOString()
+      .slice(0, 10)
+  );
 }
 
-  const sanitizeBars = (rows) => {
+const sanitizeBars = (rows) => {
   if (!rows || rows.length === 0) return rows;
 
   console.log("=== SANITIZE START ===");

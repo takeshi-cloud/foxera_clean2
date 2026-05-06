@@ -58,38 +58,50 @@ export async function fetchAndSave(
   const apiTimeframe =
     intervalMap[timeframe] || timeframe;
 
-  // =========================================
-  // ③ 取得範囲
-  // =========================================
- let start = from;
+ // =========================================
+// ③ 取得範囲
+// =========================================
+
+let start = from;
 let end = to;
 
+// 🔥 TwelveData検証結果
+// request end を +10h 広げる検証
+// save時 -10h は現状維持
+
 if (from && to) {
-  const OFFSET_MS = 10 * 60 * 60 * 1000;
 
   const startBase = new Date(from);
   const endBase = new Date(to);
 
-  // 既存ロジック
-  startBase.setDate(startBase.getDate() - 2);
+  // =====================================
+  // 🔥 既存仕様
+  // Weekly / Daily境界不足対策
+  // =====================================
 
- 
+  startBase.setDate(
+    startBase.getDate() - 2
+  );
 
-  // 🔥 ここが核心（+10h）
- const apiStart = new Date(startBase);
-apiStart.setUTCHours(21, 0, 0, 0);
-apiStart.setTime(apiStart.getTime() + OFFSET_MS);
+  // =====================================
+  // 🔥 request
+  // =====================================
+
+  const apiStart = new Date(startBase);
+
   const apiEnd = new Date(endBase);
-apiEnd.setUTCHours(21, 0, 0, 0);
 
-// そこから +10h
-apiEnd.setTime(apiEnd.getTime() + OFFSET_MS);
+  // 🔥 ENDだけ +10h
+  apiEnd.setTime(
+    apiEnd.getTime() +
+    10 * 60 * 60 * 1000
+  );
 
- start = apiStart.toISOString();
-end   = apiEnd.toISOString();
+  start = apiStart.toISOString();
+  end = apiEnd.toISOString();
 }
 
- console.log("📅 fetch mode:", {
+console.log("📅 fetch mode:", {
   type: "latest",
   outputsize,
 });
@@ -101,63 +113,98 @@ console.log("📡 FETCH REQUEST", {
   adjustedTo: end,
 });
 
+// =========================================
+// 🔥 REQUEST LOG
+// =========================================
 
- // =========================================
+console.log("📡 FETCH REQUEST", {
+  symbol,
+  timeframe,
+
+  requestedFrom: from,
+  requestedTo: to,
+
+  actualRequestFrom: start,
+  actualRequestTo: end,
+
+  note:
+    "request=UTC 그대로 / response timestamp is +10h world",
+});
+
+// =========================================
 // ④ API取得
 // =========================================
+
 let data;
 
 try {
-  // 🔥 何を取りに行ってるか（意図）
-  console.log("📡 FETCH REQUEST", {
-    symbol,
-    timeframe,
-    requestedFrom: from,
-    requestedTo: to,
-    adjustedFrom: start,
-    adjustedTo: end,
+
+  data = await fetchOHLC(symbol, apiTimeframe, {
+    from: start,
+    to: end,
     outputsize,
   });
 
- data = await fetchOHLC(symbol, apiTimeframe, {
-  from: start,
-  to: end,
-  outputsize,
-});
+  // =====================================
+  // 🔥 RESULT LOG
+  // =====================================
 
-  // 既存ログ（そのまま残す）
   console.log("🔥 FETCH COUNT:", data?.length);
-  console.log("🔥 FETCH LAST:", data?.[data.length - 1]);
 
-  // 🔥 実際に取れた範囲
+  console.log("🔥 FETCH FIRST:", data?.[0]);
+
+  console.log(
+    "🔥 FETCH LAST:",
+    data?.[data.length - 1]
+  );
+
   console.log("📡 FETCH RANGE", {
     first: data?.[0]?.timestamp_utc,
     last: data?.[data.length - 1]?.timestamp_utc,
     count: data?.length,
   });
 
-  console.log("📡 FETCH RANGE", {
-  first: data?.[0]?.timestamp_utc,
-  last: data?.[data.length - 1]?.timestamp_utc,
-});
-  // 🔥 リクエストとの差分
+  // =====================================
+  // 🔥 REQUEST vs RESPONSE
+  // =====================================
+
   console.log("📡 REQUEST vs RESULT", {
-    requestedFrom: from,
-    requestedTo: to,
-    actualFrom: data?.[0]?.timestamp_utc,
-    actualTo: data?.[data.length - 1]?.timestamp_utc,
+
+    // request
+    requestedFrom: start,
+    requestedTo: end,
+
+    // response
+    responseFirst:
+      data?.[0]?.timestamp_utc,
+
+    responseLast:
+      data?.[data.length - 1]?.timestamp_utc,
+
+    note:
+      "response timestamps are expected to be +10h shifted",
   });
 
 } catch (e) {
+
   console.error("❌ fetchOHLC failed:", e);
+
   return;
-} 
-//
+}
+
+// =========================================
+// no data
+// =========================================
+
 if (!data?.length) {
+
   console.warn("⚠️ no data fetched:", {
     symbol,
     timeframe,
+    start,
+    end,
   });
+
   return;
 }
 
