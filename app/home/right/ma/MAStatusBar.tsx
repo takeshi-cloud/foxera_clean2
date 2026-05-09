@@ -14,6 +14,9 @@ export const MAStatusBar = () => {
   const [loading, setLoading] =
     useState(false);
 
+  const [progressText, setProgressText] =
+    useState("READY");
+
   const {
     cooldown,
     isCooling,
@@ -38,9 +41,7 @@ export const MAStatusBar = () => {
           json.baseTime
             ? new Date(
                 json.baseTime
-              ).toLocaleString(
-                "ja-JP"
-              )
+              ).toLocaleString("ja-JP")
             : "-"
         );
       } catch (err) {
@@ -54,6 +55,9 @@ export const MAStatusBar = () => {
         return;
 
       setLoading(true);
+setProgressText(
+  `FETCH START ${Date.now()}`
+);
 
       try {
         const res = await fetch(
@@ -82,8 +86,14 @@ export const MAStatusBar = () => {
         );
 
         await loadLatestTime();
+
+setProgressText(
+  `BUILD COMPLETE ${Date.now()}`
+);
       } catch (err) {
         console.error(err);
+
+        setProgressText("ERROR");
 
         if (
           String(err).includes(
@@ -101,6 +111,12 @@ export const MAStatusBar = () => {
     loadLatestTime();
   }, []);
 
+  useEffect(() => {
+    if (!isCooling) {
+      setProgressText("READY");
+    }
+  }, [isCooling]);
+
 return (
   <div
     style={{
@@ -114,6 +130,7 @@ return (
       fontFamily: "sans-serif",
     }}
   >
+    {/* ===== 1行目 ===== */}
     <div
       style={{
         display: "flex",
@@ -123,16 +140,25 @@ return (
       }}
     >
       <div>
-        MA Structure  　更新日時: {updatedAt}
+        MA Structure  　更新日時:
+        {" "}
+        {updatedAt}
       </div>
 
       {/* 🔥 ボタンをまとめる */}
-      <div style={{ display: "flex", gap: 2 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 2,
+        }}
+      >
         <button
           onClick={handleRefreshMA}
-          disabled={isCooling || loading}
+          disabled={
+            isCooling || loading
+          }
           style={{
-            padding: "4px 4px",
+            padding: "2px 4px",
             fontSize: 12,
             background:
               isCooling || loading
@@ -145,15 +171,19 @@ return (
                 : "pointer",
           }}
         >
-          {loading ? "更新中..." : "更新"}
+          {loading
+            ? "更新中..."
+            : "更新"}
         </button>
 
         <button
           onClick={() => {
-            router.push ( "/debug/maStructure");
+            router.push(
+              "/debug/maStructure"
+            );
           }}
           style={{
-            padding: "4px 4px",
+            padding: "2px 4px",
             fontSize: 12,
             background: "#6366f1",
             borderRadius: 4,
@@ -165,8 +195,41 @@ return (
       </div>
     </div>
 
-    <div style={{ marginTop: -2 }}>
-      <ApiCooldownBadge cooldown={cooldown} />
+    {/* ===== 2行目 ===== */}
+    <div
+      style={{
+        marginTop: -2,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+      }}
+    >
+      {/* 左 */}
+      <div>
+        <ApiCooldownBadge cooldown={cooldown} />
+      </div>
+
+      {/* 右 */}
+      <div
+        style={{
+          fontSize: 11,
+          fontFamily: "monospace",
+          color:
+            progressText.includes(
+              "ERROR"
+            )
+              ? "#f87171"
+              : progressText.includes(
+                  "COMPLETE"
+                )
+              ? "#34d399"
+              : "#93c5fd",
+          textAlign: "right",
+          minWidth: 120,
+        }}
+      >
+        {progressText}
+      </div>
     </div>
   </div>
 );

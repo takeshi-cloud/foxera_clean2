@@ -13,12 +13,18 @@ export default function PivotStatusBar() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<Status | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [progressText, setProgressText] = useState("READY");
+  const [debugLogs, setDebugLogs] = useState<any[]>([]);
 
   const loadStatus = async () => {
     try {
-      const res = await fetch("/api/pivot/latest");
+      const res = await fetch("/api/pivot/latest", {
+        cache: "no-store",
+      });
+
       const json = await res.json();
       setStatus(json);
+
     } catch (err) {
       console.error("❌ status fetch error", err);
       setStatus(null);
@@ -33,7 +39,14 @@ export default function PivotStatusBar() {
     if (cooldown <= 0) return;
 
     const timer = setInterval(() => {
-      setCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          setProgressText("READY");
+          return 0;
+        }
+
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
@@ -42,30 +55,49 @@ export default function PivotStatusBar() {
   const handleUpdate = async () => {
     try {
       setLoading(true);
+      setProgressText("FETCH START...");
 
-      const res = await fetch("/api/pivot/radar");
+      const res = await fetch("/api/pivot/radar", {
+        cache: "no-store",
+      });
+
       if (!res.ok) throw new Error("API error");
 
       const json = await res.json();
 
       // 🔥 ログ保存だけ追加（UI変更なし）
-      if (json?.debugLogs) {
-        sessionStorage.setItem(
-          "debugLogs",
-          JSON.stringify(json.debugLogs)
-        );
-      }
+if (json?.debugLogs) {
+  sessionStorage.setItem(
+    "debugLogs",
+    JSON.stringify(json.debugLogs)
+  );
+
+  setDebugLogs(json.debugLogs);
+}
 
       if (Array.isArray(json)) {
         const successCount = json.filter((r) => r.success).length;
-        if (successCount === 0) throw new Error("All failed");
+
+        if (successCount === 0) {
+          throw new Error("All failed");
+        }
       }
 
       await loadStatus();
-      window.dispatchEvent(new CustomEvent("load-radar"));
+
+      setProgressText("BUILD COMPLETE");
+
+      window.dispatchEvent(
+        new CustomEvent("load-radar")
+      );
+
     } catch (err) {
       console.error("❌ update failed", err);
+
+      setProgressText("ERROR / RATE LIMIT");
+
       setCooldown(60);
+
     } finally {
       setLoading(false);
     }
@@ -73,14 +105,41 @@ export default function PivotStatusBar() {
 
   const formatDate = (d?: string | null) => d || "-";
 
-  const formatDateTime = (ts?: string | null) => {
+const formatDateTime = (ts?: string | null) => {
+  try {
     if (!ts) return "-";
 
-    const utc = new Date(ts);
-    const jst = new Date(utc.getTime() + 9 * 60 * 60 * 1000);
+    const normalized = ts.includes("T")
+      ? ts
+      : ts.replace(" ", "T");
 
-    return `${jst.getFullYear()}/${String(jst.getMonth() + 1).padStart(2, "0")}/${String(jst.getDate()).padStart(2, "0")} ${String(jst.getHours()).padStart(2, "0")}:${String(jst.getMinutes()).padStart(2, "0")}`;
-  };
+    const safeTs = normalized.endsWith("Z") ||
+      normalized.includes("+")
+        ? normalized
+        : `${normalized}Z`;
+
+    const date = new Date(safeTs);
+
+    if (isNaN(date.getTime())) {
+      return "INVALID";
+    }
+
+    return new Intl.DateTimeFormat("ja-JP", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(date);
+
+  } catch (e) {
+    console.error("formatDateTime error", e);
+    return "ERROR";
+  }
+};
+
 
   return (
     <div
@@ -105,7 +164,8 @@ export default function PivotStatusBar() {
       >
         {/* 左 */}
         <div>
-          PivotRadar　更新日時：{formatDateTime(status?.timestamp)}
+          PivotRadar　更新日時：
+          {formatDateTime(status?.timestamp)}
         </div>
 
         {/* 右 */}
@@ -117,23 +177,32 @@ export default function PivotStatusBar() {
           }}
         >
           {/* ランプ */}
-          <div
-            style={{
-              width: 13,
-              height: 13,
-              borderRadius: "50%",
-              background:
-                cooldown > 0
-                  ? "#ef4444"
-                  : "#34d399",
-            }}
-          />
+<div
+  style={{
+    width: 13,
+    height: 13,
+    minWidth: 13,
+    minHeight: 13,
+    borderRadius: "50%",
+    flexShrink: 0,
+    background:
+      loading
+        ? "#facc15"
+        : cooldown > 0
+        ? "#ef4444"
+        : progressText.includes("ERROR")
+        ? "#ef4444"
+        : progressText.includes("COMPLETE")
+        ? "#34d399"
+        : "#38bdf8",
+  }}
+/>
 
           <button
             onClick={handleUpdate}
             disabled={loading || cooldown > 0}
             style={{
-              padding: "4px 8px",
+              padding: "2px 8px",
               fontSize: 13,
               background:
                 loading || cooldown > 0
@@ -160,7 +229,7 @@ export default function PivotStatusBar() {
                 "/debug/pivotRadar2")
             }
             style={{
-              padding: "4px 8px",
+              padding: "2px 8px",
               fontSize: 13,
               background: "#6366f1",
               color: "#fff",
@@ -173,11 +242,61 @@ export default function PivotStatusBar() {
         </div>
       </div>
 
-      {/* ===== 2行目 ===== */}
-      <div style={{ marginTop: -2 }}>
-        Daily: {formatDate(status?.source_daily_date)}　
-        Weekly W: {formatDate(status?.source_week_start)}
-      </div>
+{/* ===== 2行目 ===== */}
+<div
+  style={{
+    marginTop: +2,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  }}
+>
+  {/* 左 */}
+  <div>
+    Daily: {formatDate(status?.source_daily_date)}　
+    Weekly W: {formatDate(status?.source_week_start)}
+  </div>
+
+  {/* 右 */}
+  <div
+    style={{
+      fontSize: 11,
+      fontFamily: "monospace",
+      color:
+        progressText.includes("ERROR")
+          ? "#f87171"
+          : progressText.includes("WAIT")
+          ? "#facc15"
+          : progressText.includes("COMPLETE")
+          ? "#34d399"
+          : "#93c5fd",
+      textAlign: "right",
+      minWidth: 120,
+    }}
+  >
+    {progressText}
+  </div>
+</div>
+
+<div
+  style={{
+    marginTop: 4,
+    maxHeight: 120,
+    overflowY: "auto",
+    fontSize: 10,
+    fontFamily: "monospace",
+    color: "#94a3b8",
+    whiteSpace: "pre-wrap",
+  }}
+>
+  {debugLogs.map((d, i) => (
+    <div key={i}>
+      {d.symbol} :
+      {d.flow?.join?.(" > ") ?? "NO FLOW"}
+    </div>
+  ))}
+</div>
+
     </div>
   );
 }
