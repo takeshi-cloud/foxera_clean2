@@ -199,6 +199,7 @@ const formatDateTime = (ts?: string | null) => {
 />
 
           <button
+          type="button"
             onClick={handleUpdate}
             disabled={loading || cooldown > 0}
             style={{
@@ -224,6 +225,7 @@ const formatDateTime = (ts?: string | null) => {
           </button>
 
           <button
+          type="button"
             onClick={() =>
               (window.location.href =
                 "/debug/pivotRadar2")

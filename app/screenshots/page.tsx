@@ -274,9 +274,15 @@ export default function ScreenshotsPage() {
         {selected && (
           <>
             {/* 🔥 安全表示 */}
-            {selected.image_url ? (
+           {(selected.image_url || selected.path) ? (
               <img
-                src={selected.image_url}
+src={
+  selected.image_url ||
+  supabase.storage
+    .from("images")
+    .getPublicUrl(selected.path)
+    .data.publicUrl
+}
                 style={{
                   maxWidth: "100%",
                   marginBottom: 16,

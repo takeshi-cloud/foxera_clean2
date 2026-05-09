@@ -152,8 +152,9 @@ return (
           gap: 2,
         }}
       >
-        <button
-          onClick={handleRefreshMA}
+       <button
+  type="button"
+  onClick={handleRefreshMA}
           disabled={
             isCooling || loading
           }
@@ -177,6 +178,7 @@ return (
         </button>
 
         <button
+        type="button"
           onClick={() => {
             router.push(
               "/debug/maStructure"
