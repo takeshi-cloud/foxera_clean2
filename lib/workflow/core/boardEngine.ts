@@ -144,7 +144,10 @@ if (!isForce && existing?.event_time) {
     : existing?.direction ?? null,
 
       image_url: log.image_url ?? existing?.image_url ?? null,
-
+note:
+  log.note !== undefined
+    ? log.note
+    : existing?.note ?? "",
       
       group_id: log.group_id,
       
