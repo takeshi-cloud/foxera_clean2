@@ -274,6 +274,7 @@ export default function ScreenshotsPage() {
       ========================= */}
       <div style={{ flex: 1, padding: 20 }}>
         {!selected && <div>選択してください</div>}
+      
 
         {selected && (
           <>
@@ -283,7 +284,7 @@ export default function ScreenshotsPage() {
 src={
   selected.image_url ||
   supabase.storage
-    .from("images")
+    .from("screenshots")
     .getPublicUrl(selected.path)
     .data.publicUrl
 }

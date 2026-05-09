@@ -49,6 +49,7 @@ export const createLog = async (
   log: {
     action: ActionType;
     pair?: string;
+    timeframe?: string | null; // ←追加
     timeframe_type?: string | null;
     direction?: string | null;
     phase?: string | null;
@@ -66,6 +67,7 @@ export const createLog = async (
     }
 
     const pair = log.pair?.replace("/", "").toUpperCase();
+    const timeframe = log.timeframe?.toUpperCase();
     const timeframe_type = log.timeframe_type?.toUpperCase();
 
     let direction =
@@ -123,6 +125,7 @@ export const createLog = async (
     const payload = {
       ...log,
       pair,
+      timeframe,
       timeframe_type,
       direction,
       phase,

@@ -41,6 +41,7 @@ export const LeftPanel = ({
  <h3 style={{ color: "white", margin: 0 }}>通貨ペア</h3>
 
   <button
+  type="button"
     onClick={() => window.location.reload()}
     style={{
       fontSize: "11px",
