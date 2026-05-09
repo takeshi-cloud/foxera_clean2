@@ -85,7 +85,9 @@ export const ChartControls = ({
       </div>
 
       {/* ボタン */}
-      <button onClick={onLoad} style={buttonStyle}>
+      <button
+      type="button"
+       onClick={onLoad} style={buttonStyle}>
         表示
       </button>
     </div>

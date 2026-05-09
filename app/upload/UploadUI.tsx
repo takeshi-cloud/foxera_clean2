@@ -130,7 +130,9 @@ export default function UploadUI() {
     <div style={container}>
       {/* ================= 左UI ================= */}
       <div style={left}>
-        <button onClick={() => router.push("/")} style={homeBtn}>
+        <button 
+        type="button"
+        onClick={() => router.push("/")} style={homeBtn}>
           ← HOME
         </button>
 
@@ -217,7 +219,9 @@ export default function UploadUI() {
 
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={selectStyle} />
 
-        <button onClick={() => setShowDetail(!showDetail)} style={toggleBtn}>
+        <button
+        type="button"
+         onClick={() => setShowDetail(!showDetail)} style={toggleBtn}>
           時刻 {showDetail ? "▲" : "▼"}
         </button>
 
@@ -236,7 +240,9 @@ export default function UploadUI() {
 
         <textarea value={note} onChange={(e) => setNote(e.target.value)} style={textareaStyle} />
 
-        <button onClick={onSave} style={saveBtn}>
+        <button 
+        type="button"
+        onClick={onSave} style={saveBtn}>
           保存
         </button>
 
@@ -247,7 +253,9 @@ export default function UploadUI() {
       <div style={right}>
         {preview ? (
           <>
-            <button onClick={handleRemoveImage} style={removeBtn}>
+            <button 
+            type="button"
+            onClick={handleRemoveImage} style={removeBtn}>
               🗑
             </button>
 

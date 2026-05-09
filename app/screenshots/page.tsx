@@ -129,6 +129,7 @@ export default function ScreenshotsPage() {
         <div style={{ padding: 8 }}>
           {/* 🔥 全てボタン */}
           <button
+          type="button"
             onClick={toggleAllSymbols}
             style={{
               marginBottom: 6,
@@ -162,6 +163,7 @@ export default function ScreenshotsPage() {
           <div style={{ marginTop: 8 }}>
             {["7d", "1m", "3m", "all"].map((r) => (
               <button
+              type="button"
                 key={r}
                 onClick={() => setRange(r)}
                 style={{
@@ -243,6 +245,7 @@ export default function ScreenshotsPage() {
               />
 
               <button
+              type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSave(item);
@@ -252,6 +255,7 @@ export default function ScreenshotsPage() {
               </button>
 
               <button
+              type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDelete(item.id);

@@ -213,6 +213,7 @@ export default function TradeJournalTable({
                 </span>
 
                 <button
+                type="button"
                   onClick={() =>
                     onOpenJournal(
                       j.id
@@ -226,6 +227,7 @@ export default function TradeJournalTable({
                 </button>
 
                 <button
+                type="button"
                   onClick={() =>
                     onDelete(
                       j.id

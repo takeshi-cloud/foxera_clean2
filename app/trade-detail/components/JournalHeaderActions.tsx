@@ -12,6 +12,7 @@ export default function JournalHeaderActions({
   return (
     <div style={container}>
       <button
+      type="button"
         onClick={onSave}
         style={primaryBtn}
         onMouseEnter={(e) =>
@@ -26,6 +27,7 @@ export default function JournalHeaderActions({
 
       {journalId && (
         <button
+        type="button"
           onClick={onClear}
           style={dangerBtn}
           onMouseEnter={(e) =>
@@ -40,6 +42,7 @@ export default function JournalHeaderActions({
       )}
 
       <button
+      type="button"
         onClick={() =>
           (window.location.href = "/trade-journal")
         }

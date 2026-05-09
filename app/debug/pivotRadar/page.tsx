@@ -60,7 +60,9 @@ export default function DebugPivotRadarPage() {
 
       <h1>Pivot Radar Debug（完全版）</h1>
 
-      <button onClick={load}>🔄 reload</button>
+      <button
+      type="button"
+       onClick={load}>🔄 reload</button>
 
       <table
         style={{

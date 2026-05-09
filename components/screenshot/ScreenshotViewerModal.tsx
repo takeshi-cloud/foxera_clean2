@@ -130,11 +130,15 @@ export const ScreenshotViewerModal = ({ open, onClose, symbol }: any) => {
             <span>{symbol}</span>
 
             <div style={{ display: "flex", gap: "8px" }}>
-              <button onClick={() => setIsFull((p) => !p)}>
+              <button 
+              type="button"
+              onClick={() => setIsFull((p) => !p)}>
                 ⛶
               </button>
 
-              <button onClick={onClose}>✕</button>
+              <button
+              type="button"
+               onClick={onClose}>✕</button>
             </div>
           </div>
 

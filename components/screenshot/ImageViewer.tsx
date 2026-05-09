@@ -138,6 +138,7 @@ const [isFull, setIsFull] = useState(false);
     >
       {/* 🔥 リセットボタン */}
       <button
+      type="button"
         onClick={(e) => {
           e.stopPropagation();
           resetView();

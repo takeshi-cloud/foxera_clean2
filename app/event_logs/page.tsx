@@ -197,6 +197,7 @@ export default function Page() {
       <div style={{ display: "flex", marginBottom: "12px" }}>
         <div style={{ flex: 1 }}>
           <button
+          type="button"
             onClick={() => router.push("/")}
             style={{
               padding: "10px 16px",

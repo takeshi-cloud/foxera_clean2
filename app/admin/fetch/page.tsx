@@ -175,7 +175,9 @@ export default function FetchPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#08080a", color: "white", padding: 20 }}>
-      <button onClick={() => router.push("/")} style={{ fontSize: 25 }}>
+      <button
+      type="button"
+       onClick={() => router.push("/")} style={{ fontSize: 25 }}>
         🏠 HOME
       </button>
 
@@ -224,11 +226,19 @@ export default function FetchPage() {
             setTasks(t);
           }} />
 
-          <button onClick={() => setDays(i, 5)}>5日</button>
-          <button onClick={() => setDays(i, 20)}>20日</button>
-          <button onClick={() => setDays(i, 80)}>80日</button>
+          <button 
+          type="button"
+          onClick={() => setDays(i, 5)}>5日</button>
+          <button
+          type="button"
+           onClick={() => setDays(i, 20)}>20日</button>
+          <button 
+          type="button"
+          onClick={() => setDays(i, 80)}>80日</button>
 
-          <button onClick={() => runTask(i)}>実行</button>
+          <button
+          type="button"
+           onClick={() => runTask(i)}>実行</button>
 
           <span>
             {task.status === "idle" && "⚪"}
@@ -249,19 +259,25 @@ export default function FetchPage() {
 
         <div>
           <h3>日足（10日）</h3>
-          <button onClick={runDaily}>実行</button>
+          <button 
+          type="button"
+          onClick={runDaily}>実行</button>
           <div>{dailyStatus}</div>
         </div>
 
         <div>
           <h3>週足（5週）</h3>
-          <button onClick={runWeekly}>実行</button>
+          <button
+          type="button"
+           onClick={runWeekly}>実行</button>
           <div>{weeklyStatus}</div>
         </div>
 
         <div>
           <h3>月足（6ヶ月）</h3>
-          <button onClick={runMonthly}>実行</button>
+          <button
+          type="button"
+           onClick={runMonthly}>実行</button>
           <div>{monthlyStatus}</div>
         </div>
 

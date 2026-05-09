@@ -196,6 +196,7 @@ export default function TradeJournalPage() {
   </h1>
 
   <button
+  type="button"
     onClick={() =>
       window.location.href =
         "/"
@@ -248,6 +249,7 @@ export default function TradeJournalPage() {
         />
 
         <button
+        type="button"
   onClick={() =>
     router.push("/chart")
   }

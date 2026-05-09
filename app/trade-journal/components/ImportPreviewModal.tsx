@@ -60,10 +60,12 @@ export default function ImportPreviewModal({
 
         <div className="flex gap-2 mt-4">
           <button onClick={handleSave}>
+            type="button"
             保存
           </button>
 
           <button onClick={onClose}>
+            type="button"
             キャンセル
           </button>
         </div>

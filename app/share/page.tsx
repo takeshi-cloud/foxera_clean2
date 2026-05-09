@@ -151,6 +151,7 @@ function SharePageInner() {
           />
 
           <button
+          type="button"
             onClick={handleSave}
             disabled={!selected || !file}
             style={{
@@ -165,6 +166,7 @@ function SharePageInner() {
           </button>
 
           <button
+          type="button"
             onClick={handleCancel}
             style={{
               padding: "8px 12px",

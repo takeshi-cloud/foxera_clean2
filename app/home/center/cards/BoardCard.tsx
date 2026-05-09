@@ -221,6 +221,7 @@ export const BoardCard = ({
           <div style={styles.upload}>
   {/* 📈 チャート */}
   <button
+  type="button"
     onClick={(e) => {
       e.stopPropagation();
 
@@ -237,6 +238,7 @@ export const BoardCard = ({
 
   {/* 📸 */}
   <button
+  type="button"
     onClick={(e) => {
       e.stopPropagation();
       setOpenUpload(true);

@@ -65,6 +65,7 @@ export const ChartArea = ({
           }}
         >
           <button
+          type="button"
             onClick={() => setShowLine(!showLine)}
             style={{
               marginRight: 10,
@@ -79,6 +80,7 @@ export const ChartArea = ({
           </button>
 
           <button
+          type="button"
             onClick={() => setShowZigzag(!showZigzag)}
             style={{
               padding: "4px 8px",

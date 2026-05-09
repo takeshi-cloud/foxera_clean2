@@ -156,6 +156,7 @@ useEffect(() => {
           />
 
           <button
+          type="button"
             onClick={handleSave}
             disabled={!selected || !file}
             style={{
@@ -169,6 +170,7 @@ useEffect(() => {
           </button>
 
           <button
+          type="button"
             onClick={onClose}
             style={{
               padding: "8px 12px",

@@ -86,6 +86,7 @@ export default function PivotRadarDebug() {
       </h1>
 
       <button
+      type="button"
         onClick={load}
         className="mb-4 px-3 py-1 bg-blue-600 rounded"
       >

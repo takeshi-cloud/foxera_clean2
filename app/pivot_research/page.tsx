@@ -54,6 +54,7 @@ export default function PivotResearchPage() {
 
         {/* 実行ボタン */}
         <button
+        type="button"
           onClick={async () => {
             const res = await fetch("/api/pivot/update", {
               method: "POST",

@@ -201,6 +201,7 @@ return (
 
           {/* ボタン */}
           <button
+          type="button"
             onClick={(e) => {
               e.stopPropagation();
               setOpenViewer(true);

@@ -108,6 +108,7 @@ export default function EventTable({
                 {/* 削除 */}
                 <td style={tdStyle}>
                   <button
+                  type="button"
                     onClick={(e) => {
                       e.stopPropagation(); // 👉 行クリック防止
                       handleDelete(s);
@@ -263,6 +264,7 @@ export default function EventTable({
                 {/* 更新 */}
                 <td style={tdStyle}>
                   <button
+                  type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleUpdate(s); // 👉 ここでログ更新（確定）

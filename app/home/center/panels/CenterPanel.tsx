@@ -208,6 +208,7 @@ const filteredPairs =
           </button>
 
           <button
+          type="button"
             onClick={() => setShowShort(!showShort)}
             style={{
               background: showShort ? "#ef4444" : "#1e293b",

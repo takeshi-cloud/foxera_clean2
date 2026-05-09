@@ -119,6 +119,7 @@ export function HomeChartControls({
 />
 
       <button
+      type="button"
   onClick={onLoad}
   style={{
     background: "#2563eb",
