@@ -23,7 +23,7 @@ export function HomeChartContainer({
   showZigzag,
    dowLines, // ←追加
 }: Props) {
- console.log("🔥 CONTAINER RENDER");
+
   // =============================
   // 🎯 JST変換（安定版）
   // =============================
@@ -79,12 +79,7 @@ export function HomeChartContainer({
       </g>
     );
   };
-console.log("LINES", dowLines);
-console.log("CHECK INDEX", dowLines.map(l => ({
-  fromIndex: l.fromIndex,
-  breakIndex: l.breakIndex,
-  time: merged[l.fromIndex]?.time,
-})));
+
   return (
 <div style={{ width: "100%", height: "100%", minHeight: 300 }}>
  <ResponsiveContainer width="100%" height={"100%"}>

@@ -92,7 +92,6 @@ export const RightPanel = ({
             }}
           >
 <ScreenshotPanel
- key={activePair}
   activePair={activePair}
   setActivePair={setActivePair}
 />

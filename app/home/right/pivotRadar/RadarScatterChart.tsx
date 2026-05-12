@@ -82,8 +82,7 @@ const CustomLabel = (
   setActivePair: (pair: string) => void
 ) => {
   const { x, y, value, payload } = props;
-  console.log("PAIR", payload?.pair);
-console.log("ACTIVE", activePair);
+
 
   const normalize = (p: any) =>
   String(p ?? "").replace("/", "").toUpperCase();

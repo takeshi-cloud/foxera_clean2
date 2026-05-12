@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Status = {
   source_daily_date: string | null;
@@ -15,6 +16,7 @@ export default function PivotStatusBar() {
   const [cooldown, setCooldown] = useState(0);
   const [progressText, setProgressText] = useState("READY");
   const [debugLogs, setDebugLogs] = useState<any[]>([]);
+  const router = useRouter();
 
   const loadStatus = async () => {
     try {
@@ -226,10 +228,11 @@ const formatDateTime = (ts?: string | null) => {
 
           <button
           type="button"
-            onClick={() =>
-              (window.location.href =
-                "/debug/pivotRadar2")
-            }
+onClick={() =>
+  router.push(
+    "/debug/pivotRadar2"
+  )
+}
             style={{
               padding: "2px 8px",
               fontSize: 13,
