@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import JournalChartSection from "@/app/trade-detail/components/JournalChartSection";
+import AnalysisChartSection from "@/app/chart/components/AnalysisChartSection";
 import { MARKETS } from "@/lib/constants/markets";
 
 export default function ClientChartPage() {
@@ -49,7 +49,7 @@ export default function ClientChartPage() {
     >
       <h2>Chart</h2>
 
-      <JournalChartSection
+      <AnalysisChartSection
         key={`${symbol}-${startDate}-${endDate}`}
         initialChartState={{
           symbol,

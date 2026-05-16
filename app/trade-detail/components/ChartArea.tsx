@@ -49,6 +49,8 @@ export const ChartArea = ({
         style={{
           position: "relative",
           width: "100%",
+           minHeight: 600,
+    minWidth: 0,
         }}
       >
         {/* 設定パネル */}
@@ -121,7 +123,7 @@ export const ChartArea = ({
         {/* Chart */}
         {/* ============================= */}
         <ResponsiveContainer
-          width="100%"
+          width="99%"
           height={600}
         >
           <LineChart data={merged}>

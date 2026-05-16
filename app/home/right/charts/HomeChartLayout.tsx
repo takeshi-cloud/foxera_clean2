@@ -7,7 +7,7 @@ type Props = {
   merged: any[];
   showLine: boolean;
   showZigzag: boolean;
-   dowLines: any[];
+  dowLines: any[];
 };
 
 export function HomeChartLayout({
@@ -15,30 +15,67 @@ export function HomeChartLayout({
   merged,
   showLine,
   showZigzag,
-   dowLines, // ←追加
-   
+  dowLines,
 }: Props) {
+  console.log("dowLines", dowLines);
+
+  // =========================
+  // ローディング中
+  // =========================
   if (loading) {
     return (
-      <div style={{ color: "white" }}>
+      <div
+        style={{
+          height: 400,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+        }}
+      >
         Loading...
       </div>
     );
   }
-console.log("dowLines", dowLines);
+
+  // =========================
+  // データ未取得時
+  // （初回空描画防止）
+  // =========================
+  if (!merged || merged.length === 0) {
+    return (
+      <div
+        style={{
+          height: 400,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#888",
+        }}
+      >
+        Waiting chart data...
+      </div>
+    );
+  }
+
+  // =========================
+  // Chart
+  // =========================
   return (
     <div
       style={{
         flex: 1,
         minHeight: 0,
+        minWidth: 0, // ← flex崩れ対策（重要）
         overflow: "hidden",
+        height: "100%",
       }}
     >
       <HomeChartContainer
         merged={merged}
         showLine={showLine}
         showZigzag={showZigzag}
-        dowLines={dowLines} 
+        dowLines={dowLines}
       />
     </div>
   );

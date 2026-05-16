@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ResponsiveContainer,
+   ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
@@ -24,6 +24,23 @@ export function HomeChartContainer({
    dowLines, // ←追加
 }: Props) {
 
+ if (!merged || merged.length === 0) {
+    return (
+      <div
+        style={{
+          height: 400,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#888",
+        }}
+      >
+        Waiting chart data...
+      </div>
+    );
+  }
+
+
   // =============================
   // 🎯 JST変換（安定版）
   // =============================
@@ -37,7 +54,6 @@ export function HomeChartContainer({
     d.setHours(d.getHours() + 9);
     return d.getDate();
   };
-
   // =============================
   // 🎯 CustomTick
   // =============================
@@ -81,10 +97,20 @@ export function HomeChartContainer({
   };
 
   return (
-<div style={{ width: "100%", height: "100%", minHeight: 300 }}>
- <ResponsiveContainer width="100%" height={"100%"}>
-        <LineChart
-          data={merged}
+<div
+  style={{
+    width: 1000,
+    height: 400,
+    minWidth: 1000,
+    overflow: "hidden",
+  }}
+>
+<ResponsiveContainer
+  width="100%"
+  height={400}
+>
+  <LineChart
+    data={merged}
           margin={{
             top: 0,
             right: 15,
@@ -178,7 +204,7 @@ export function HomeChartContainer({
             />
           )}
         </LineChart>
-      </ResponsiveContainer>
+</ResponsiveContainer>
     </div>
   );
 }

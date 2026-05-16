@@ -6,6 +6,7 @@ import { RadarPanel } from "../pivotRadar/RadarPanel";
 import { MAStructurePanel } from "../ma/MAStructurePanel";
 import { HomeChartPanel } from "../charts/HomeChartPanel";
 import { ScreenshotPanel } from "../screenshot/ScreenshotPanel";
+import { useEffect } from "react";
 
 export const RightPanel = ({
   activePair,
@@ -14,6 +15,16 @@ export const RightPanel = ({
   activePair: string;
   setActivePair: (pair: string) => void;
 }) => {
+    console.log(
+    "🔥 RIGHT PANEL RENDER",
+    Date.now()
+  );
+
+  useEffect(() => {
+    console.log(
+      "🔥 RIGHT PANEL MOUNT"
+    );
+  }, []);
   return (
     <div
       style={{
@@ -81,6 +92,7 @@ export const RightPanel = ({
             gap: 8,
             flex: 1,
             minHeight: 0,
+             minWidth: 0, // ←追加
           }}
         >
           {/* スクショ（固定） */}
@@ -98,12 +110,15 @@ export const RightPanel = ({
           </div>
 
           {/* チャート（広く） */}
-          <div
-            style={{
-              minWidth: 800,           // ← ここが主役
-              flex: "1 1 auto",
-            }}
-          >
+<div
+  style={{
+    width: "max-content",
+    minWidth: 1000, // ←長さ（調整可）
+    minHeight: 0,
+    overflow: "hidden",
+    flexShrink: 0, // ←超重要
+  }}
+>
  <HomeChartPanel
   activePair={activePair}
   setActivePair={setActivePair}

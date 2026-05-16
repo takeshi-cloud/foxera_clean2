@@ -175,7 +175,11 @@ export const RadarScatterChart = ({
     .sort((a, b) => b.y - a.y);
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+   <ResponsiveContainer
+  width="100%"
+  height="100%"
+  minWidth={0}
+>
       <ScatterChart
         margin={{
           top: 10,
