@@ -336,27 +336,41 @@ setShowPivot,
 {/* ============================= */}
 {/* Chart */}
 {/* ============================= */}
-<ResponsiveContainer
-  width="99%"
-  height={600}
+
+<div
+  style={{
+    overflowX: "auto",
+    WebkitOverflowScrolling:
+      "touch",
+    width: "100%",
+  }}
 >
-  <LineChart
-    data={merged}
-onClick={(state: any) => {
-  const idx =
-    state?.activeTooltipIndex;
+  <div
+    style={{
+      minWidth: 1200,
+    }}
+  >
+    <ResponsiveContainer
+      width="100%"
+      height={600}
+    >
+      <LineChart
+        data={merged}
+        onClick={(state: any) => {
+          const idx =
+            state?.activeTooltipIndex;
 
-  console.log(
-    "🔥 CLICK IDX",
-    idx
-  );
+          console.log(
+            "🔥 CLICK IDX",
+            idx
+          );
 
-  if (
-    idx == null ||
-    !setSelectedZigzagIndex
-  ) {
-    return;
-  }
+          if (
+            idx == null ||
+            !setSelectedZigzagIndex
+          ) {
+            return;
+          }
 
   // ==================================
   // 一番近い ZigZag 頂点
@@ -598,6 +612,7 @@ onClick={(state: any) => {
   </LineChart>
 </ResponsiveContainer>
 </div>
+</div>
       {/* ============================= */}
       {/* 日付レイヤー */}
       {/* ============================= */}
@@ -635,6 +650,7 @@ onClick={(state: any) => {
           );
         })}
       </div>
+    </div>
     </div>
   );
 };
