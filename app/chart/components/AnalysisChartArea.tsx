@@ -58,6 +58,8 @@ setShowPivot: (
   v: boolean
 ) => void;
 
+dowLines: any[];
+
 };
 
 
@@ -81,6 +83,7 @@ setShowFib,
 
 showPivot,
 setShowPivot,
+dowLines,
 }: Props) => {
   console.log("✅ AnalysisChartArea rendered");
 
@@ -608,6 +611,46 @@ setShowPivot,
       );
     }}
   />
+)}
+
+{/* ============================= */}
+{/* 🔥 Dow Lines */}
+{/* ============================= */}
+
+{dowLines?.map(
+  (line, i) => {
+    const startTime =
+      line.time;
+
+    return (
+      <Line
+        key={`dow-${i}`}
+        type="linear"
+        dataKey={(d) => {
+          if (!startTime)
+            return null;
+
+          return new Date(
+            d.time
+          ) >=
+            new Date(
+              startTime
+            )
+            ? line.price
+            : null;
+        }}
+        stroke={
+          line.type ===
+          "trendBreakUp"
+            ? "#00ff00"
+            : "#ff0000"
+        }
+        strokeWidth={2}
+        dot={false}
+        connectNulls
+      />
+    );
+  }
 )}
   </LineChart>
 </ResponsiveContainer>

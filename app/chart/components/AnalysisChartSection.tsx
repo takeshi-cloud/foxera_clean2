@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { AnalysisChartArea } from "./AnalysisChartArea";
 import { AnalysisChartControls } from "./AnalysisChartControls";
-
 import { calcZigzag } from "@/lib/chart/zigzag/calcZigzag";
 import { mergeData } from "@/lib/chart/mergeData";
-
 import { buildFibExpansion } from "@/lib/chart/fibonacci/buildFibExpansion";
+import { buildDowLines } from "@/lib/chart/technical/buildDowLines";
 
 type ChartState = {
   symbol: string;
@@ -263,6 +261,19 @@ console.log(
   zigzagData.length
 );
 
+//----------------------------------------
+// 🔥 Dow Theory
+//----------------------------------------
+const dowLines =
+  buildDowLines(
+    zigzagData
+  );
+
+console.log(
+  "🔥 DOW",
+  dowLines
+);
+
   //----------------------------------------
   // Merge
   //----------------------------------------
@@ -324,22 +335,18 @@ console.log(
   setSelectedZigzagIndex={
     setSelectedZigzagIndex
   }
-
   showFib={showFib}
   setShowFib={
     setShowFib
   }
-
   showPivot={showPivot}
   setShowPivot={
     setShowPivot
   }
-
   showLine={showLine}
   setShowLine={
     setShowLine
   }
-
   showZigzag={
     showZigzag
   }
@@ -360,6 +367,7 @@ console.log(
   setZigzagDepth={
     setZigzagDepth
   }
+  dowLines={dowLines}
 />
     </div>
   );
