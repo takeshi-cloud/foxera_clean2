@@ -347,7 +347,7 @@ setShowPivot,
 >
   <div
     style={{
-      minWidth: 1200,
+      minWidth: 900,
     }}
   >
     <ResponsiveContainer
