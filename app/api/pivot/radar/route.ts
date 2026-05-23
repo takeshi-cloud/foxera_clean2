@@ -25,14 +25,40 @@ export async function GET(req: Request) {
     // =========================================
     // CACHE MAP
     // =========================================
-    const { data: latestRows } = await supabase
-      .from("pivot_radar_history")
-      .select("symbol, price_timestamp")
-      .in("symbol", targets.map((m) => m.api));
+const cacheMap =
+  new Map();
 
-    const cacheMap = new Map(
-      (latestRows || []).map((r) => [r.symbol, r])
+for (const m of targets) {
+  const {
+    data: latest,
+  } = await supabase
+    .from(
+      "pivot_radar_history"
+    )
+    .select(
+      "symbol, price_timestamp"
+    )
+    .eq(
+      "symbol",
+      m.api
+    )
+    .order(
+      "timestamp",
+      {
+        ascending:
+          false,
+      }
+    )
+    .limit(1)
+    .maybeSingle();
+
+  if (latest) {
+    cacheMap.set(
+      m.api,
+      latest
     );
+  }
+}
 
     const results: any[] = [];
 
@@ -54,16 +80,45 @@ export async function GET(req: Request) {
 
           let skip = false;
 
-          if (!force && cache?.price_timestamp) {
-            const diffMin =
-              (Date.now() -
-                new Date(cache.price_timestamp).getTime()) /
-              60000;
+if (
+  !force &&
+  cache?.price_timestamp
+) {
+  const cacheDate =
+    new Date(
+      cache.price_timestamp
+    );
 
-            if (diffMin < 15) {
-              skip = true;
-            }
-          }
+  const diffMin =
+    (Date.now() -
+      cacheDate.getTime()) /
+    60000;
+
+  log(
+    "CACHE CHECK",
+    {
+      market: m.api,
+
+      dbTimestamp:
+        cache.price_timestamp,
+
+      parsed:
+        cacheDate.toISOString(),
+
+      now:
+        new Date().toISOString(),
+
+      diffMin,
+    }
+  );
+
+ if (
+  diffMin >= 0 &&
+  diffMin < 5
+) {
+  skip = true;
+}
+}
 
           // =====================================
           // CACHE

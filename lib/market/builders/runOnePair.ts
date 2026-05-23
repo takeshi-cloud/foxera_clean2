@@ -86,15 +86,50 @@ export const runOnePair = async (MARKET: string) => {
     let isFresh = false;
 
     if (latest?.price_timestamp) {
-      const diffMin =
-        (Date.now() - new Date(latest.price_timestamp).getTime()) / 60000;
+  const latestDate =
+    new Date(
+      latest.price_timestamp
+    );
 
-      isFresh = diffMin < 5;
+  const diffMin =
+    (Date.now() -
+      latestDate.getTime()) /
+    60000;
 
-      log("CACHE AGE CHECK", { diffMin, isFresh });
-    } else {
-      log("CACHE SKIP (no timestamp)");
+isFresh = diffMin < 5;
+
+  log(
+    "CACHE DEBUG",
+    {
+      symbol: MARKET,
+
+      dbTimestamp:
+        latest.price_timestamp,
+
+      parsed:
+        latestDate.toISOString(),
+
+      now:
+        new Date().toISOString(),
+
+      diffMin,
+
+      isFresh,
     }
+  );
+
+  log(
+    "CACHE AGE CHECK",
+    {
+      diffMin,
+      isFresh,
+    }
+  );
+} else {
+  log(
+    "CACHE SKIP (no timestamp)"
+  );
+}
 
     // =========================================
     // PIVOT

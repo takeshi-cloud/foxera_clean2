@@ -1,6 +1,17 @@
 export function calcZigzag(data, deviation = 0.03, depth = 3) {
   if (data.length < depth * 2 + 1) return [];
 
+   console.log(
+    "zigzag invalid data",
+    data.filter((d) => !d)
+  );
+
+  console.log(
+    "zigzag bad price",
+    data.find((d) => !d?.price)
+  );
+
+
   const pivots = [];
   let lastPivot = null;
 

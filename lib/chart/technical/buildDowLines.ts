@@ -3,22 +3,43 @@
 type Pivot = {
   price: number;
   type: "HIGH" | "LOW";
-    time: string; // 🔥追加
+  time: string;
 };
 
 type DowLine = {
-  type: "trendBreakUp" | "trendBreakDown";
-  price: number;
-   time: string; // 🔥追加
+  id: number;
 
-  fromIndex: number;   // ← ④（ライン位置）
-  breakIndex: number;  // ← ⑤（ブレイク）
+  type:
+    | "trendBreakUp"
+    | "trendBreakDown";
+
+  price: number;
+  time: string;
+
+  fromIndex: number;
+  breakIndex: number;
+
+  endIndex?: number;
+  endTime?: string;
+  endReason?: string;
 };
 
-export function buildDowLines(pivots: Pivot[]): DowLine[] {
+const REVERSE_LIMIT = 3;
+
+export function buildDowLines(
+  pivots: Pivot[]
+): DowLine[] {
   const result: DowLine[] = [];
 
-  for (let i = 0; i < pivots.length - 4; i++) {
+  // =========================
+  // 起点生成
+  // =========================
+
+  for (
+    let i = 0;
+    i < pivots.length - 4;
+    i++
+  ) {
     const p1 = pivots[i];
     const p2 = pivots[i + 1];
     const p3 = pivots[i + 2];
@@ -26,8 +47,9 @@ export function buildDowLines(pivots: Pivot[]): DowLine[] {
     const p5 = pivots[i + 4];
 
     // =========================
-    // 📉 下降トレンド → 上抜け崩壊
+    // 📉 下降 → 上抜け崩壊
     // =========================
+
     if (
       p1.type === "HIGH" &&
       p2.type === "LOW" &&
@@ -35,27 +57,47 @@ export function buildDowLines(pivots: Pivot[]): DowLine[] {
       p4.type === "LOW" &&
       p5.type === "HIGH"
     ) {
-      const lowerHigh = p3.price < p1.price;
-      const lowerLow = p4.price < p2.price;
-      const breakUp = p5.price > p3.price;
+      const lowerHigh =
+        p3.price < p1.price;
 
-      if (lowerHigh && lowerLow && breakUp) {
+      const lowerLow =
+        p4.price < p2.price;
+
+      const breakUp =
+        p5.price > p3.price;
+
+      if (
+        lowerHigh &&
+        lowerLow &&
+        breakUp
+      ) {
         result.push({
-          type: "trendBreakUp",
+          id:
+            result.length +
+            1,
 
-          // 🔥 核心（④に線）
-          price: p4.price,
+          type:
+            "trendBreakUp",
 
-          fromIndex: i + 3,   // ← ④
-          breakIndex: i + 4,  // ← ⑤
-            time: p4.time, // 🔥これ追加
+          price:
+            p4.price,
+
+          fromIndex:
+            i + 3,
+
+          breakIndex:
+            i + 4,
+
+          time:
+            p4.time,
         });
       }
     }
 
     // =========================
-    // 📈 上昇トレンド → 下抜け崩壊
+    // 📈 上昇 → 下抜け崩壊
     // =========================
+
     if (
       p1.type === "LOW" &&
       p2.type === "HIGH" &&
@@ -63,21 +105,98 @@ export function buildDowLines(pivots: Pivot[]): DowLine[] {
       p4.type === "HIGH" &&
       p5.type === "LOW"
     ) {
-      const higherLow = p3.price > p1.price;
-      const higherHigh = p4.price > p2.price;
-      const breakDown = p5.price < p3.price;
+      const higherLow =
+        p3.price > p1.price;
 
-      if (higherLow && higherHigh && breakDown) {
+      const higherHigh =
+        p4.price > p2.price;
+
+      const breakDown =
+        p5.price < p3.price;
+
+      if (
+        higherLow &&
+        higherHigh &&
+        breakDown
+      ) {
         result.push({
-          type: "trendBreakDown",
-          price: p4.price,
-          fromIndex: i + 3,
-          breakIndex: i + 4,
-            time: p4.time, // 🔥これ追加
+          id:
+            result.length +
+            1,
+
+          type:
+            "trendBreakDown",
+
+          price:
+            p4.price,
+
+          fromIndex:
+            i + 3,
+
+          breakIndex:
+            i + 4,
+
+          time:
+            p4.time,
         });
       }
     }
   }
+
+  // =========================
+  // 終点ロジック
+  // 逆行3本
+  // =========================
+
+  result.forEach(
+    (line) => {
+      let reverseCount = 0;
+
+      for (
+        let i =
+          line.breakIndex +
+          1;
+        i <
+        pivots.length;
+        i++
+      ) {
+        const pivot =
+          pivots[i];
+
+        const isReverse =
+          line.type ===
+          "trendBreakUp"
+            ? pivot.price <
+              line.price
+            : pivot.price >
+              line.price;
+
+        if (
+          isReverse
+        ) {
+          reverseCount++;
+        } else {
+          reverseCount = 0;
+        }
+
+        if (
+          reverseCount >=
+          REVERSE_LIMIT
+        ) {
+          line.endIndex =
+            i;
+
+          line.endTime =
+            pivot.time;
+
+          line.endReason =
+            "reverse3";
+
+          break;
+        }
+      }
+    }
+  );
 
   return result;
 }
