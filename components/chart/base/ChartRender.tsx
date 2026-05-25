@@ -37,7 +37,7 @@ export default function ChartRender({
   showPivot,
   dowLines,
   width = 900,
-  height = 600,
+  height = 640,
 }: Props) {
   const FIB_LABELS = [
     "0.618",
@@ -47,13 +47,22 @@ export default function ChartRender({
     "3.618",
     "4.618",
   ];
-
+console.log(
+  "PIVOT CHECK",
+  merged?.[0]
+);
   return (
-    <LineChart
-      width={width}
-      height={height}
-      data={merged}
-      onClick={(state: any) => {
+<LineChart
+  width={width}
+  height={height - 30}
+  data={merged}
+  margin={{
+    top: 5,
+    right: 10,
+    left: 0,
+    bottom: 28,
+  }}
+  onClick={(state: any) => {
         const idx = state?.activeTooltipIndex;
 
         console.log("🔥 CLICK IDX", idx);
@@ -81,23 +90,32 @@ export default function ChartRender({
         setSelectedZigzagIndex(nearest.index);
       }}
     >
-      <CartesianGrid stroke="#555" />
+<CartesianGrid stroke="#555" />
 
-      <XAxis
-        dataKey="time"
-        stroke="#aaa"
-        tickFormatter={(value) => {
-          const date = new Date(value);
-          const hour = date.getHours();
-          const day = date.getDate();
+<XAxis
+  dataKey="time"
+  stroke="#aaa"
+  height={35}
+  tickMargin={6}
+  tickFormatter={(value) => {
+    const date = new Date(value);
+    const hour = date.getHours();
+    const day = date.getDate();
 
-          if (hour === 0) return `${day}日`;
+    if (hour === 0) return `${day}日`;
 
-          return `${String(hour).padStart(2, "0")}:00`;
-        }}
-      />
+    return `${String(hour).padStart(2, "0")}:00`;
+  }}
+/>
 
-      <YAxis domain={["auto", "auto"]} />
+<YAxis
+  domain={[
+    (min:number)=>
+      min * 0.998,
+    (max:number)=>
+      max * 1.002,
+  ]}
+/>
 
       {/* ============================= */}
       {/* FIB */}
@@ -200,6 +218,20 @@ export default function ChartRender({
           }}
         />
       )}
+
+{/* ============================= */}
+{/* WEEKLY PIVOT */}
+{/* ============================= */}
+
+{showPivot&&(
+  <>
+    <Line dataKey="pp" stroke="#ffaa00" strokeWidth={2} dot={false} connectNulls />
+    <Line dataKey="r1" stroke="#ff6666" strokeWidth={1} dot={false} connectNulls />
+    <Line dataKey="r2" stroke="#aa0000" strokeWidth={1} dot={false} connectNulls />
+    <Line dataKey="s1" stroke="#66ff66" strokeWidth={1} dot={false} connectNulls />
+    <Line dataKey="s2" stroke="#00aa00" strokeWidth={1} dot={false} connectNulls />
+  </>
+)}
 
 {/* ============================= */}
 {/* DOW */}

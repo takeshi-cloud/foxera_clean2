@@ -2,9 +2,7 @@
 
 type Props = {
   merged?: any[];
-
   children: React.ReactNode;
-
   compact?: boolean;
 };
 
@@ -17,16 +15,14 @@ export default function ChartBaseUI({
     <div
       style={{
         overflowX: "auto",
-        WebkitOverflowScrolling:
-          "touch",
+        WebkitOverflowScrolling: "touch",
         width: "100%",
       }}
     >
       <div
         style={{
-          minWidth: compact
-            ? 500
-            : 900,
+          minWidth: compact ? 500 : 900,
+          position: "relative",
         }}
       >
         {children}
@@ -37,73 +33,52 @@ export default function ChartBaseUI({
 
         <div
           style={{
-            position:
-              "relative",
+            position: "absolute",
+            left: 0,
+            top: compact ? 470 : 540,
             width: "100%",
-            height: compact
-              ? 14
-              : 20,
-            marginTop: compact
-              ? -10
-              : -15,
+            height: compact ? 16 : 20,
+            pointerEvents: "none",
           }}
         >
-          {merged.map(
-            (d, i) => {
-              const date =
-                new Date(
-                  d.time
-                );
+          {merged.map((d, i) => {
+            const date = new Date(d.time);
+            const day = date.getDate();
 
-              const day =
-                date.getDate();
-
-              if (i > 0) {
-                const prev =
-                  new Date(
-                    merged[
-                      i - 1
-                    ].time
-                  );
-
-                if (
-                  prev.getDate() ===
-                  day
-                )
-                  return null;
-              }
-
-              return (
-                <div
-                  key={i}
-                  style={{
-                    position:
-                      "absolute",
-                    left: `${
-                      (i /
-                        Math.max(
-                          merged.length,
-                          1
-                        )) *
-                      100
-                    }%`,
-                    transform:
-                      "translateX(-50%)",
-                    color:
-                      "#ccc",
-                    fontSize:
-                      compact
-                        ? 10
-                        : 12,
-                    whiteSpace:
-                      "nowrap",
-                  }}
-                >
-                  {day}日
-                </div>
+            if (i > 0) {
+              const prev = new Date(
+                merged[i - 1].time
               );
+
+              if (
+                prev.getDate() === day
+              ) {
+                return null;
+              }
             }
-          )}
+
+            return (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+left: `calc(${
+  (i /
+    Math.max(
+      merged.length - 1,
+      1
+    )) * 100
+}% * 0.94 + 42px)`,
+                  transform: "translateX(-50%)",
+                  color: "#ccc",
+                  fontSize: compact ? 10 : 12,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {day}日
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
