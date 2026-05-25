@@ -370,7 +370,7 @@ const { data:pivots=[] } =
     .select("*")
     .eq("symbol",symbol)
     .eq("timeframe","weekly");
-
+//
 return series.map(bar=>{
   const d =
     new Date(bar.time);
